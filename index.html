@@ -401,7 +401,6 @@
         <div class="card-title"><svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>達成履歴（カレンダー）</div>
         <div id="heatmapMonths"></div>
         <div class="cal-legend"><span><i style="background:var(--surface-alt); border:1px solid var(--line);"></i>未達成/記録なし</span><span><i style="background:var(--mint-100)"></i>一部達成</span><span><i style="background:var(--mint-500)"></i>全達成</span></div>
-        <div id="heatmapDetail" style="margin-top:var(--sp-3); font-size:12.5px; color:var(--ink-500); font-weight:500;"></div>
       </section>
 
       <section class="card">
@@ -528,6 +527,14 @@
         <input type="text" id="questEditAddInput" placeholder="自由入力で追加">
         <button id="questEditAddBtn">追加</button>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="dayDetailModal">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><div class="sheet-title" id="dayDetailTitle">7月20日（月）</div><button class="icon-btn" id="closeDayDetailModal" aria-label="閉じる"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button></div>
+      <div id="dayDetailBody"></div>
     </div>
   </div>
 
@@ -1132,13 +1139,57 @@ function renderHeatmap(){
     return `<div class="cal-month-title">${mo.label}</div><div class="cal-grid">${WD_JP.map(w=>`<div class="cal-wd">${w}</div>`).join("")}${cells}</div>`;
   }).join("");
   wrap.querySelectorAll(".cal-cell[data-key]").forEach(cell=>{
-    cell.addEventListener("click", ()=>{
-      const key = cell.dataset.key;
-      const s = dayQuestStats(key);
-      document.getElementById("heatmapDetail").textContent = `${fmtJP(key)}：クエスト ${s.done}/${s.total} 達成`;
-    });
+    cell.addEventListener("click", ()=> openDayDetailModal(cell.dataset.key));
   });
 }
+
+function questStateLabel(item){
+  if(TOSHIN_LABELS.includes(item.label)){
+    if(item.passed) return {text:"合格", cls:"passed"};
+    if(item.done) return {text:"実施済み（未合格）", cls:"attempted"};
+    return {text:"未実施", cls:""};
+  }
+  return item.done ? {text:"済", cls:"done"} : {text:"未", cls:""};
+}
+
+function openDayDetailModal(key){
+  document.getElementById("dayDetailTitle").textContent = fmtJP(key);
+  const s = dayQuestStats(key);
+  const ev = store.events[key] || {};
+  const ed = store.eventDone[key] || {};
+  const koma = store.jukuKoma[key] || 0;
+  const q = store.quests[key] || {am:[],pm:[],night:[]};
+
+  const eventLines = [];
+  if(ev.schoolSupp) eventLines.push(`学校補習：${ed.schoolSupp?"完了":"未完了"}`);
+  if(ev.englishJuku) eventLines.push(`英語塾：${ed.englishJuku?"完了":"未完了"}`);
+  if(koma>0) eventLines.push(`東進：予定${koma}コマ`);
+  if(ev.others && ev.others.length) ev.others.forEach(o=> eventLines.push(`${o.label}（${PERIOD_LABEL[o.period]||o.period}）`));
+
+  const periodLabelMap = {am:"午前", pm:"午後", night:"夜"};
+  let questHtml = "";
+  ["am","pm","night"].forEach(period=>{
+    if(!q[period].length) return;
+    questHtml += `<div style="font-size:11px; font-weight:700; color:var(--ink-500); margin:10px 0 4px;">${periodLabelMap[period]}</div>`;
+    q[period].forEach(item=>{
+      const st = questStateLabel(item);
+      const color = st.cls==="passed" ? "var(--mint-700)" : st.cls==="done"||st.cls==="attempted" ? "var(--ink-500)" : "var(--ink-300)";
+      questHtml += `<div style="display:flex; justify-content:space-between; font-size:12.5px; padding:4px 0; border-bottom:1px solid var(--line);">
+        <span>${item.label}</span><span style="color:${color}; font-weight:700;">${st.text}</span>
+      </div>`;
+    });
+  });
+  if(!questHtml) questHtml = `<div style="font-size:12.5px; color:var(--ink-300); padding:8px 0;">この日のクエストはありません</div>`;
+
+  document.getElementById("dayDetailBody").innerHTML = `
+    <div style="font-family:var(--font-display); font-weight:900; font-size:16px; color:var(--mint-700); margin-bottom:4px;">クエスト ${s.done}/${s.total} 達成</div>
+    ${eventLines.length ? `<div style="font-size:12px; color:var(--ink-500); font-weight:500; line-height:1.7; margin-bottom:8px;">${eventLines.join("<br>")}</div>` : ""}
+    ${questHtml}
+  `;
+  document.getElementById("dayDetailModal").classList.add("open");
+}
+document.getElementById("closeDayDetailModal").addEventListener("click", ()=> document.getElementById("dayDetailModal").classList.remove("open"));
+document.getElementById("dayDetailModal").addEventListener("click", e=>{ if(e.target.id==="dayDetailModal") document.getElementById("dayDetailModal").classList.remove("open"); });
 
 function renderDailyChart(){
   const wrap = document.getElementById("dailyChart");
