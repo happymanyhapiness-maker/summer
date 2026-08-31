@@ -1,0 +1,274 @@
+/* ============================================================
+   デイリークエスト ─ テーマ差し替え用スタイル（着せ替え対応）v2
+   92.planner/index.html の既存 <style> の「あと」に読み込む。
+
+   ★v2 の変更点（重要）
+   　旧版はスキン側で地色（--bg / --surface / --ink-*）まで指定していたため、
+   　ダークモードと競合して朱・墨が壊れていた。
+   　v2 では役割を厳密に分ける：
+   　　data-theme … 地色・文字色・線・影（明暗）
+   　　data-skin  … アクセント色だけ（明暗それぞれに1色ずつ）
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+
+/* ============================================================
+   2-A. 明暗（data-theme）── 地色・文字・線・影
+   ============================================================ */
+:root {
+  --page-bg:    #e4e6e2;
+  --bg:         #eceee9;
+  --surface:    #fbfcfa;
+  --surface-alt:#f2f4f0;
+  --ink-900:    #1e2620;
+  --ink-500:    rgba(30,38,32,.62);
+  --ink-300:    rgba(30,38,32,.42);
+  --line:       rgba(30,38,32,.14);
+  --shadow-card:0 1px 3px rgba(30,38,32,.06);
+
+  --radius-lg:8px; --radius-md:8px; --radius-sm:4px;
+  --font-display:'Zen Old Mincho', serif;
+  --font-body:'Noto Sans JP', 'Zen Kaku Gothic New', sans-serif;
+  --font-num:'Cormorant Garamond', serif;
+}
+
+:root[data-theme="dark"] {
+  --page-bg:    #06090c;
+  --bg:         #0c1014;
+  --surface:    #161b21;
+  --surface-alt:#1d232a;
+  --ink-900:    #e6ebf0;
+  --ink-500:    rgba(230,235,240,.62);
+  --ink-300:    rgba(230,235,240,.40);
+  --line:       rgba(230,235,240,.14);
+  --shadow-card:0 1px 3px rgba(0,0,0,.40);
+}
+
+/* 地色をスキンの温度に少しだけ寄せる（明暗の関係は壊さない） */
+:root[data-skin="sumi"] { --page-bg:#e9e6df; --bg:#f2efe9; --surface:#fcfaf6; --surface-alt:#f4f1ea; }
+:root[data-skin="ai"]   { --page-bg:#e2e5e8; --bg:#edeff2; --surface:#fbfcfd; --surface-alt:#eef1f4; }
+:root[data-skin="shu"]  { --page-bg:#eae4df; --bg:#f4f1ec; --surface:#fdfbf8; --surface-alt:#f5f1ec; }
+:root[data-skin="zansho"] { --page-bg:#dfe6e8; --bg:#ebf1f2; --surface:#fafdfd; --surface-alt:#edf2f3; }
+:root[data-skin="yukari"] { --page-bg:#e6e2ea; --bg:#f0edf3; --surface:#fbf9fc; --surface-alt:#f2eff5; }
+:root[data-theme="dark"][data-skin="sumi"] { --page-bg:#0a0907; --bg:#14120f; --surface:#1c1916; --surface-alt:#241f1a; }
+:root[data-theme="dark"][data-skin="ai"]   { --page-bg:#07090c; --bg:#0f1318; --surface:#171c22; --surface-alt:#1e242b; }
+:root[data-theme="dark"][data-skin="shu"]  { --page-bg:#0c0908; --bg:#16110f; --surface:#1f1917; --surface-alt:#271f1c; }
+:root[data-theme="dark"][data-skin="zansho"] { --page-bg:#070c0e; --bg:#0d1416; --surface:#161f22; --surface-alt:#1c2629; }
+:root[data-theme="dark"][data-skin="yukari"] { --page-bg:#0c0910; --bg:#131019; --surface:#1c1824; --surface-alt:#241f2d; }
+
+/* ============================================================
+   2-B. 配色（data-skin）── アクセントだけ
+   ライトは暗めの色、ダークは明るめの色を使う。
+   　（同じ色を両方に使うと、どちらかで必ず読めなくなる）
+   ============================================================ */
+
+/* 緑（既定） */
+:root, :root[data-skin="midori"] {
+  --mint-500:#3f6350; --mint-600:#34523f; --mint-700:#294032;
+  --mint-100:rgba(63,99,80,.20); --mint-50:rgba(63,99,80,.08);
+}
+:root[data-theme="dark"], :root[data-theme="dark"][data-skin="midori"] {
+  --mint-500:#7dabd1; --mint-600:#98bcdb; --mint-700:#b3cee6;
+  --mint-100:rgba(125,171,209,.24); --mint-50:rgba(125,171,209,.10);
+}
+
+/* 墨＋金 */
+:root[data-skin="sumi"] {
+  --mint-500:#8a6528; --mint-600:#725320; --mint-700:#5c421a;
+  --mint-100:rgba(138,101,40,.20); --mint-50:rgba(138,101,40,.08);
+}
+:root[data-theme="dark"][data-skin="sumi"] {
+  --mint-500:#c99a4a; --mint-600:#d7ad63; --mint-700:#e3c184;
+  --mint-100:rgba(201,154,74,.24); --mint-50:rgba(201,154,74,.10);
+}
+
+/* 藍 */
+:root[data-skin="ai"] {
+  --mint-500:#35506b; --mint-600:#2a4157; --mint-700:#213345;
+  --mint-100:rgba(53,80,107,.20); --mint-50:rgba(53,80,107,.08);
+}
+:root[data-theme="dark"][data-skin="ai"] {
+  --mint-500:#7fa3c9; --mint-600:#9ab8d8; --mint-700:#b6cce5;
+  --mint-100:rgba(127,163,201,.24); --mint-50:rgba(127,163,201,.10);
+}
+
+/* 朱 */
+:root[data-skin="shu"] {
+  --mint-500:#9a3b2b; --mint-600:#813123; --mint-700:#68271c;
+  --mint-100:rgba(154,59,43,.18); --mint-50:rgba(154,59,43,.07);
+}
+:root[data-theme="dark"][data-skin="shu"] {
+  --mint-500:#d0705c; --mint-600:#dd8874; --mint-700:#e8a493;
+  --mint-100:rgba(208,112,92,.24); --mint-50:rgba(208,112,92,.10);
+}
+
+/* 紫（ゆかり） */
+:root[data-skin="yukari"] {
+  --mint-500:#5d4a7a; --mint-600:#4c3c65; --mint-700:#3d3052;
+  --mint-100:rgba(93,74,122,.20); --mint-50:rgba(93,74,122,.08);
+}
+:root[data-theme="dark"][data-skin="yukari"] {
+  --mint-500:#a693c9; --mint-600:#b8a7d8; --mint-700:#c9bce3;
+  --mint-100:rgba(166,147,201,.24); --mint-50:rgba(166,147,201,.10);
+}
+
+/* 残暑（風鈴のガラスのような、少しくすんだ水色） */
+:root[data-skin="zansho"] {
+  --mint-500:#2f7a8a; --mint-600:#266370; --mint-700:#1e4f59;
+  --mint-100:rgba(47,122,138,.20); --mint-50:rgba(47,122,138,.08);
+}
+:root[data-theme="dark"][data-skin="zansho"] {
+  --mint-500:#7cc9dd; --mint-600:#94d3e3; --mint-700:#aedeea;
+  --mint-100:rgba(124,201,221,.22); --mint-50:rgba(124,201,221,.10);
+}
+
+/* 補助色（明暗で持ち替え） */
+:root {
+  --amber-500:#a5762f; --amber-100:rgba(165,118,47,.10);
+  --sky-500:#4f7f86;   --sky-100:rgba(79,127,134,.10);
+  --sun-400:#c2914a;   --purple-500:#7f74a8; --purple-100:rgba(127,116,168,.10);
+  --danger-500:#9d3b2c; --danger-100:rgba(157,59,44,.08);
+}
+:root[data-theme="dark"] {
+  --amber-500:#c2914a; --amber-100:rgba(194,145,74,.12);
+  --sky-500:#7fb2b8;   --sky-100:rgba(127,178,184,.12);
+  --sun-400:#d9b06a;   --purple-500:#9184c0; --purple-100:rgba(145,132,192,.14);
+  --danger-500:#c9614f; --danger-100:rgba(201,97,79,.12);
+}
+
+/* ============================================================
+   3. 見た目の上書き
+   ============================================================ */
+
+/* 数字は Cormorant の等幅数字で */
+.day-count, .ring-value, .mission-frac, .home-summary .hs-frac,
+.home-summary .hs-pct, .results-headline b,
+.exam-countdown .ec-main b, #questCount, #toshinFrac {
+  font-family: var(--font-num) !important;
+  font-weight: 400 !important;
+  font-feature-settings: 'tnum';
+  letter-spacing: .02em;
+}
+.day-count { font-size:46px; }
+.ring-value { font-size:26px; }
+
+/* カレンダーは日本語(年月・曜日)を含むので、読みやすいゴシックのまま */
+.cal-nav span, .cal-cell .dnum {
+  font-family: var(--font-body) !important;
+  font-weight: 700 !important;
+  letter-spacing: normal;
+}
+
+/* ヘッダー */
+.app-header {
+  background: var(--bg) !important;
+  color: var(--ink-900);
+  border-radius: 0;
+  border-bottom: 1px solid var(--line);
+  box-shadow: none;
+  padding-top: 22px;
+}
+.app-header .icon-btn { color: var(--ink-900); }
+.app-header .icon-btn:hover { background: var(--mint-50); }
+.header-title { color: var(--ink-900); font-weight:500; letter-spacing:.1em; font-size:18px; }
+.header-title svg { stroke: var(--mint-500); }
+.weather-pill { background:transparent; border-color:var(--line); color:var(--ink-900); }
+.weather-pill .wp-temp { color:var(--ink-900); font-family:var(--font-num); font-weight:400; }
+.weather-pill .wp-loc  { color:var(--ink-500); font-weight:400; }
+
+/* カード */
+.card {
+  border:none; border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card); padding:0; overflow:hidden;
+}
+.card > *:not(.card-title):not(.card-title-row) { padding-left:18px; padding-right:18px; }
+.card-title, .card-title-row { padding:16px 18px 12px; margin-bottom:0; }
+.card-title { font-weight:500; font-size:11px; letter-spacing:.3em; color:var(--ink-500); }
+.card-title .t-icon { display:none; }
+.card > *:last-child { padding-bottom:18px; }
+
+/* 試験カウントダウン（暗地に暗文字だった不具合の解消） */
+.exam-countdown {
+  background: var(--surface) !important;
+  border:none; border-radius:var(--radius-lg); box-shadow:var(--shadow-card);
+}
+.exam-countdown .ec-main { color:var(--ink-900); font-weight:400; }
+.exam-countdown .ec-sub  { color:var(--ink-500); font-weight:400; }
+
+/* チェック */
+.checkbox { border-radius:50%; width:20px; height:20px; border-width:1px; border-color:var(--ink-300); }
+.quest-item { border-bottom-color:var(--line); padding:17px 2px; border-radius:4px; }
+.quest-item.done { background:var(--mint-50); }
+.quest-label { font-size:15px; font-weight:400; letter-spacing:.03em; }
+.quest-item.done .quest-label { color:var(--ink-300); text-decoration-thickness:1px; }
+
+/* ボタン類は塗らない。1px の枠で */
+.link-btn, .add-quest-btn, .save-btn, .cat-add-btn, .preset-add-btn {
+  background:transparent !important;
+  color:var(--mint-500) !important;
+  border:1px solid var(--mint-500) !important;
+  border-radius:var(--radius-sm) !important;
+  font-weight:400; letter-spacing:.08em; min-height:44px;
+}
+.link-btn { min-height:36px; border-radius:999px !important; white-space:nowrap; background:var(--mint-50) !important; }
+.save-btn:hover, .add-quest-btn:hover, .cat-add-btn:hover, .link-btn:hover { background:var(--mint-100) !important; }
+
+/* 選択中のトグル（表示モード・配色）も塗らずに枠＋薄い地で示す */
+.toggle-row button, .records-tab-btn, .settings-tab-btn {
+  background:transparent !important;
+  border:1px solid var(--line) !important;
+  color:var(--ink-500) !important;
+  border-radius:999px !important;
+  font-weight:400; letter-spacing:.06em; min-height:40px;
+}
+.toggle-row button.active, .records-tab-btn.active, .settings-tab-btn.active {
+  border-color:var(--mint-500) !important;
+  background:var(--mint-50) !important;
+  color:var(--mint-500) !important;
+}
+
+/* タグ・チップ */
+.chip { border-radius:999px; border-color:var(--line); background:transparent; min-height:40px; font-weight:400; color:var(--ink-900); }
+.chip.added { border-color:var(--mint-500); background:var(--mint-50); color:var(--mint-500); }
+
+/* 入力欄：地は surface-alt、文字は必ず ink-900（ダークで黒箱になる不具合の防止） */
+input, select, textarea,
+.settings-num-row input, .preset-edit-row input, .cat-manager-head input,
+.free-input-row input, .quest-edit-row input[type=text], .type-manager-row input[type=text] {
+  background: var(--surface-alt) !important;
+  color: var(--ink-900) !important;
+  border:1px solid var(--line) !important;
+  border-radius: var(--radius-sm) !important;
+}
+input::placeholder { color: var(--ink-300); }
+.free-input-row button { background:transparent !important; color:var(--mint-500) !important; border:1px solid var(--mint-500) !important; }
+
+/* 下タブ */
+.bottom-nav { background:var(--surface-alt); border-top:1px solid var(--line); box-shadow:0 -2px 8px rgba(0,0,0,.05); }
+.nav-item { color:var(--ink-300); border-radius:0; }
+.nav-item svg { display:none; }
+.nav-item span { font-size:12px; font-weight:400; letter-spacing:.12em; }
+.nav-item.active { color:var(--mint-500); background:transparent; border-bottom:1px solid var(--mint-500); }
+
+/* ライトモードは背景と馴染みすぎるので、下部ナビだけアクセント色の濃いバーに */
+:root:not([data-theme="dark"]) .bottom-nav { background:var(--mint-500); border-top:none; box-shadow:0 -2px 8px rgba(0,0,0,.12); }
+:root:not([data-theme="dark"]) .nav-item { color:rgba(255,255,255,.6); }
+:root:not([data-theme="dark"]) .nav-item.active { color:#fff; border-bottom-color:#fff; }
+
+/* 今日の予定（午前・午後・夜）：のっぺりしすぎないよう時間帯ごとに薄いアクセントを戻す */
+#eventPeriodGrid .period-box:nth-child(1) { background:var(--amber-100); border-color:transparent; }
+#eventPeriodGrid .period-box:nth-child(1) .period-tag { color:var(--amber-500); }
+#eventPeriodGrid .period-box:nth-child(2) { background:var(--sky-100); border-color:transparent; }
+#eventPeriodGrid .period-box:nth-child(2) .period-tag { color:var(--sky-500); }
+#eventPeriodGrid .period-box:nth-child(3) { background:var(--purple-100); border-color:transparent; }
+#eventPeriodGrid .period-box:nth-child(3) .period-tag { color:var(--purple-500); }
+
+/* シート・カレンダー */
+.sheet { border:none; border-radius:14px 14px 0 0; background:var(--surface); }
+.sheet-handle { background:var(--line); }
+.cal-cell { border-radius:6px; background:transparent; border:1px solid transparent; }
+.cal-cell.today { border-color:var(--mint-500); background:var(--mint-50); }
+.cal-cell .dnum { font-weight:400; font-size:13px; }
+.cal-legend { background:transparent; border-color:var(--line); }
+
+:focus-visible { outline:2px solid var(--mint-500); outline-offset:2px; }
