@@ -262,7 +262,7 @@
 <link rel="stylesheet" href="dq-theme.css">
 </head>
 <body>
-<script type="module" src="dq-firebase-sync.js?v=2"></script>
+<script type="module" src="dq-firebase-sync.js?v=4"></script>
 <template id="__bundler_thumbnail" data-bg-color="#111A24">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="800" fill="#111A24"/>
@@ -1324,6 +1324,76 @@ function applyKyotsuMathSummary(summary){
   renderRecords();
 }
 
+/* ===== 英コミュアプリの学習ログ連携 =====
+   英コミュ側がFirestoreの eikomi-summary/{EIKOMI_FAMILY_ID} に書いている
+   {lastStudiedAt, todayCount, totalCount} を読んで、
+   ・「英語」の教科ギャップ表示に反映
+   ・その日の演習実績があれば「英語」タグの自動クエストを完了扱いで積む
+   の2つに使う。kyotsu-math連携と同じパターン。 */
+let eikomiSummary = null;
+const EIKOMI_TAG = "英語";
+const EIKOMI_AUTO_LABEL = "英コミュ（自動記録）";
+
+function applyEikomiSummary(summary){
+  eikomiSummary = summary || null;
+  if(!summary || !summary.lastStudiedAt) { renderRecords(); return; }
+
+  const d = new Date(summary.lastStudiedAt);
+  const key = toKey(d.getFullYear(), d.getMonth()+1, d.getDate());
+  const day = ensureDay(key);
+  let entry = day.quests.find(q=>q.autoSource==="eikomi");
+  const label = summary.todayCount && key===todaySystemKey()
+    ? `${EIKOMI_AUTO_LABEL}（本日${summary.todayCount}問）`
+    : EIKOMI_AUTO_LABEL;
+
+  if(entry){
+    if(!entry.done || entry.label !== label){
+      entry.done = true;
+      entry.label = label;
+      persist();
+    }
+  } else {
+    day.quests.push({label, done:true, tag:EIKOMI_TAG, autoSource:"eikomi"});
+    persist();
+  }
+  renderRecords();
+}
+
+/* ===== LEAP単語帳アプリの学習ログ連携 =====
+   LEAP側がFirestoreの leap-summary/{CHILD_UID} に書いている
+   {lastStudiedAt, todayCount, totalCount} を読んで、
+   ・「英語」の教科ギャップ表示に反映（英コミュと同じ「英語」タグ内に並べて表示）
+   ・その日の演習実績があれば「英語」タグの自動クエストを完了扱いで積む
+   の2つに使う。kyotsu-math/英コミュ連携と同じパターン。 */
+let leapSummary = null;
+const LEAP_TAG = "英語";
+const LEAP_AUTO_LABEL = "LEAP単語帳（自動記録）";
+
+function applyLeapSummary(summary){
+  leapSummary = summary || null;
+  if(!summary || !summary.lastStudiedAt) { renderRecords(); return; }
+
+  const d = new Date(summary.lastStudiedAt);
+  const key = toKey(d.getFullYear(), d.getMonth()+1, d.getDate());
+  const day = ensureDay(key);
+  let entry = day.quests.find(q=>q.autoSource==="leap");
+  const label = summary.todayCount && key===todaySystemKey()
+    ? `${LEAP_AUTO_LABEL}（本日${summary.todayCount}問）`
+    : LEAP_AUTO_LABEL;
+
+  if(entry){
+    if(!entry.done || entry.label !== label){
+      entry.done = true;
+      entry.label = label;
+      persist();
+    }
+  } else {
+    day.quests.push({label, done:true, tag:LEAP_TAG, autoSource:"leap"});
+    persist();
+  }
+  renderRecords();
+}
+
 function renderSubjectGapList(){
   const el = document.getElementById("subjectGapList");
   if(!el) return;
@@ -1350,6 +1420,14 @@ function renderSubjectGapList(){
     let extraHtml = "";
     if(tag===KYOTSU_MATH_TAG && kyotsuMathSummary && kyotsuMathSummary.todayCount){
       extraHtml = `<span class="subject-gap-since" style="margin-left:6px;color:#166534;">（本日${kyotsuMathSummary.todayCount}問）</span>`;
+    }
+    if(tag===EIKOMI_TAG){
+      const parts = [];
+      if(eikomiSummary && eikomiSummary.todayCount) parts.push(`英コミュ${eikomiSummary.todayCount}問`);
+      if(leapSummary && leapSummary.todayCount) parts.push(`LEAP${leapSummary.todayCount}問`);
+      if(parts.length){
+        extraHtml = `<span class="subject-gap-since" style="margin-left:6px;color:#166534;">（本日${parts.join("・")}）</span>`;
+      }
     }
     return `<div class="subject-gap-row"><span class="subject-gap-name">${tag}</span><span>${sinceHtml}${extraHtml}</span></div>`;
   }).join("");
@@ -2094,6 +2172,22 @@ if(window.FirebaseSync){
     }
     if(window.FirebaseSync.watchKyotsuMathSummary){
       window.FirebaseSync.watchKyotsuMathSummary(applyKyotsuMathSummary);
+    }
+
+    // 英コミュアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
+    if(window.FirebaseSync.pullEikomiSummary){
+      window.FirebaseSync.pullEikomiSummary().then(applyEikomiSummary);
+    }
+    if(window.FirebaseSync.watchEikomiSummary){
+      window.FirebaseSync.watchEikomiSummary(applyEikomiSummary);
+    }
+
+    // LEAP単語帳アプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
+    if(window.FirebaseSync.pullLeapSummary){
+      window.FirebaseSync.pullLeapSummary().then(applyLeapSummary);
+    }
+    if(window.FirebaseSync.watchLeapSummary){
+      window.FirebaseSync.watchLeapSummary(applyLeapSummary);
     }
   });
   window.addEventListener("firebaseAuthChanged", function(){ location.reload(); });

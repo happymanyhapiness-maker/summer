@@ -43,6 +43,17 @@ const LOGS_COLLECTION = "dailyquest-logs";
 // {lastStudiedAt, todayCount, totalCount, updatedAt} だけの軽量ドキュメント
 const KYOTSU_MATH_SUMMARY_COLLECTION = "kyotsu-math-summary";
 
+// 英コミュアプリが同期のたびに書き込む学習サマリー
+// {lastStudiedAt, todayCount, totalCount, updatedAt} だけの軽量ドキュメント
+// 英コミュは「家族共有ドキュメント」方式なので、uidではなくFAMILY_IDをキーにする
+const EIKOMI_SUMMARY_COLLECTION = "eikomi-summary";
+const EIKOMI_FAMILY_ID = "eikomi-family-01";
+
+// LEAP単語帳アプリが同期のたびに書き込む学習サマリー
+// {lastStudiedAt, todayCount, totalCount, updatedAt} だけの軽量ドキュメント
+// kyotsu-mathと同じく、uid（CHILD_UID）ごとのドキュメント方式
+const LEAP_SUMMARY_COLLECTION = "leap-summary";
+
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
@@ -153,6 +164,38 @@ function watchKyotsuMathSummary(callback){
   }, function(){ /* 権限エラー等は無視して黙る */ });
 }
 
+// ===== 英コミュアプリの学習サマリー連携 =====
+// 英コミュ側（firebase-sync.js）が同期のたびに書き込んでいる
+// {lastStudiedAt, todayCount, totalCount, updatedAt} を読むだけ。
+// 家族共有ドキュメント方式なので、doc IDはuidではなくEIKOMI_FAMILY_ID固定。
+function pullEikomiSummary(){
+  return getDoc(doc(db,EIKOMI_SUMMARY_COLLECTION,EIKOMI_FAMILY_ID)).then(function(snap){
+    return snap.exists() ? snap.data() : null;
+  }).catch(function(){return null;});
+}
+
+function watchEikomiSummary(callback){
+  return onSnapshot(doc(db,EIKOMI_SUMMARY_COLLECTION,EIKOMI_FAMILY_ID), function(snap){
+    callback(snap.exists() ? snap.data() : null);
+  }, function(){ /* 権限エラー等は無視して黙る */ });
+}
+
+// ===== LEAP単語帳アプリの学習サマリー連携 =====
+// LEAP側（firebase-sync.js）が同期のたびに書き込んでいる
+// {lastStudiedAt, todayCount, totalCount, updatedAt} を読むだけ。
+// kyotsu-mathと同じく、常に子供のuid（CHILD_UID）を見に行く。
+function pullLeapSummary(){
+  return getDoc(doc(db,LEAP_SUMMARY_COLLECTION,CHILD_UID)).then(function(snap){
+    return snap.exists() ? snap.data() : null;
+  }).catch(function(){return null;});
+}
+
+function watchLeapSummary(callback){
+  return onSnapshot(doc(db,LEAP_SUMMARY_COLLECTION,CHILD_UID), function(snap){
+    callback(snap.exists() ? snap.data() : null);
+  }, function(){ /* 権限エラー等は無視して黙る */ });
+}
+
 window.FirebaseSync = {
   onReady: onReady,
   login: login,
@@ -165,6 +208,10 @@ window.FirebaseSync = {
   watchChildLogs: watchChildLogs,
   pullKyotsuMathSummary: pullKyotsuMathSummary,
   watchKyotsuMathSummary: watchKyotsuMathSummary,
+  pullEikomiSummary: pullEikomiSummary,
+  watchEikomiSummary: watchEikomiSummary,
+  pullLeapSummary: pullLeapSummary,
+  watchLeapSummary: watchLeapSummary,
   ADMIN_UID: ADMIN_UID,
   CHILD_UID: CHILD_UID,
   INDEPENDENT_UID: INDEPENDENT_UID
