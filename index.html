@@ -642,7 +642,8 @@ const V1_APP_LABEL = "アプリ学習";
 const V1_TOSHIN_LABELS = ["東進（英語）","東進（物理）","東進（数学）"];
 const V1_CAT_LABEL = {eng:"英語", math:"数学", other:"その他", app:"アプリ", toshin:"東進"};
 const EXAM_TYPE_NAMES = ["定期テスト・実力テスト","模試"];
-const SUBJECT_TAGS = ["国語","数学","英語","理科","社会","東進","英語塾"];
+const SUBJECT_TAGS = ["現代文","古典","漢文","数学α","数学β","英語１","英語２","科学","物理","世界史","地理","自主学習"];
+const PRESETS_VERSION = 2;
 const UNTAGGED = "未分類";
 function inferTag(catName){ return SUBJECT_TAGS.includes(catName) ? catName : UNTAGGED; }
 let freeAddTag = UNTAGGED;
@@ -670,11 +671,20 @@ function defaultStore(){
     toshinInitial: 40,
     badges: [],
     days: {},
+    presetsVersion: PRESETS_VERSION,
     presets: [
-      {id:uid("c"), name:"英語", labels:["単語","文法","リーディング"]},
-      {id:uid("c"), name:"数学", labels:["問題演習","復習"]},
-      {id:uid("c"), name:"その他", labels:["国語","古文","漢文"]},
-      {id:uid("c"), name:"東進", labels:["東進（英語）","東進（物理）","東進（数学）"]}
+      {id:uid("c"), name:"現代文", labels:["問題演習","音読"]},
+      {id:uid("c"), name:"古典", labels:["単語","文法"]},
+      {id:uid("c"), name:"漢文", labels:["句法","演習"]},
+      {id:uid("c"), name:"数学α", labels:["問題演習","復習"]},
+      {id:uid("c"), name:"数学β", labels:["問題演習","復習"]},
+      {id:uid("c"), name:"英語１", labels:["単語","文法"]},
+      {id:uid("c"), name:"英語２", labels:["リーディング","リスニング"]},
+      {id:uid("c"), name:"科学", labels:["演習","復習"]},
+      {id:uid("c"), name:"物理", labels:["演習","復習"]},
+      {id:uid("c"), name:"世界史", labels:["通史","一問一答"]},
+      {id:uid("c"), name:"地理", labels:["統計","一問一答"]},
+      {id:uid("c"), name:"自主学習", labels:["英コミュ","LEAP","数学アプリ"]}
     ]
   };
 }
@@ -839,6 +849,10 @@ function loadStore(){
       const parsed = JSON.parse(raw);
       if(!parsed.days) parsed.days = {};
       if(!parsed.presets) parsed.presets = defaultStore().presets;
+      if(parsed.presetsVersion !== PRESETS_VERSION){
+        parsed.presets = defaultStore().presets;
+        parsed.presetsVersion = PRESETS_VERSION;
+      }
       if(!parsed.eventTypes || !parsed.eventTypes.length) parsed.eventTypes = defaultEventTypes();
       parsed.eventTypes.forEach(t=>{ if(typeof t.examCountdown !== "boolean") t.examCountdown = EXAM_TYPE_NAMES.includes(t.name); });
       if(!parsed.appName) parsed.appName = "デイリークエスト";
@@ -863,6 +877,10 @@ function loadStore(){
       if(v1raw) migrated = migrateFromV1(v1raw);
     }
     const fresh = migrated || defaultStore();
+    if(fresh.presetsVersion !== PRESETS_VERSION){
+      fresh.presets = defaultStore().presets;
+      fresh.presetsVersion = PRESETS_VERSION;
+    }
     if(typeof fresh.toshinRemaining !== "number") fresh.toshinRemaining = 40;
     if(typeof fresh.toshinInitial !== "number") fresh.toshinInitial = Math.max(fresh.toshinRemaining, 40);
     if(!Array.isArray(fresh.badges)) fresh.badges = [];
