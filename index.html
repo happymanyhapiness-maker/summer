@@ -2146,7 +2146,16 @@ function renderAllScreens(){
   renderRecords();
   renderSettings();
 }
-if(window.FirebaseSync){
+(function waitForFirebaseSync(){
+  // dq-firebase-sync.jsはtype="module"（自動的にdeferされ、HTML解析が
+  // すべて終わってから実行される）なのに対し、このスクリプトは普通の
+  // <script>としてHTML解析中にその場で同期実行される。そのため単純に
+  // if(window.FirebaseSync){...}と一度だけ判定すると、まだモジュールの
+  // 読み込みが終わっておらずwindow.FirebaseSyncが存在しない状態で
+  // チェックが失敗し、以下の自動連携登録が一度も実行されない
+  // （＝クラウド同期・自動クエスト反映が動かない）バグがあった。
+  // window.FirebaseSyncが実際に使えるようになるまで待ってから実行する。
+  if(!window.FirebaseSync){ setTimeout(waitForFirebaseSync, 50); return; }
   window.FirebaseSync.onReady(function(user){
     renderSettings();
     if(!user) return;
@@ -2204,7 +2213,7 @@ if(window.FirebaseSync){
     });
   });
   window.addEventListener("firebaseAuthChanged", function(){ location.reload(); });
-}
+})();
 </script>
 </div>
 </body>
