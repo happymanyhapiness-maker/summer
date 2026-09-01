@@ -1812,9 +1812,18 @@ function renderAccountArea(){
       const password = document.getElementById("fbPassword").value;
       const errEl = document.getElementById("fbLoginError");
       errEl.textContent = "";
+      if(!window.FirebaseSync){
+        errEl.textContent = "通信の準備中です。数秒待ってからもう一度お試しください。";
+        return;
+      }
       if(!email || !password){ errEl.textContent = "メールアドレスとパスワードを入力してください。"; return; }
-      fs.login(email, password).catch(()=>{
+      const btn = document.getElementById("fbLoginBtn");
+      btn.disabled = true;
+      btn.textContent = "ログイン中…";
+      window.FirebaseSync.login(email, password).catch((e)=>{
         errEl.textContent = "ログインに失敗しました。メールアドレスまたはパスワードが正しくありません。";
+        btn.disabled = false;
+        btn.textContent = "ログイン";
       });
     });
   } else {
