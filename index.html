@@ -2166,28 +2166,36 @@ if(window.FirebaseSync){
       }
     });
 
-    // kyotsu-mathアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
-    if(window.FirebaseSync.pullKyotsuMathSummary){
-      window.FirebaseSync.pullKyotsuMathSummary().then(applyKyotsuMathSummary);
-    }
-    if(window.FirebaseSync.watchKyotsuMathSummary){
-      window.FirebaseSync.watchKyotsuMathSummary(applyKyotsuMathSummary);
-    }
+    // 各アプリの学習ログ自動連携（kyotsu-math／英コミュ／LEAP）は、
+    // 子供本人がログインしているときだけ動かす。
+    // 親（admin）でログインしたときにこれを動かすと、子供の学習内容から
+    // 自動生成したクエストが親自身のdailyquest-logs（ADMIN_UID）に書き込まれてしまい、
+    // 親のログと子供のログが混ざってしまうため。
+    // 親が子供の様子を見たいときは「👀 子供の様子を見る」ボタン（読み取り専用）を使う。
+    if(window.FirebaseSync.currentRole && window.FirebaseSync.currentRole()==="child"){
+      // kyotsu-mathアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
+      if(window.FirebaseSync.pullKyotsuMathSummary){
+        window.FirebaseSync.pullKyotsuMathSummary().then(applyKyotsuMathSummary);
+      }
+      if(window.FirebaseSync.watchKyotsuMathSummary){
+        window.FirebaseSync.watchKyotsuMathSummary(applyKyotsuMathSummary);
+      }
 
-    // 英コミュアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
-    if(window.FirebaseSync.pullEikomiSummary){
-      window.FirebaseSync.pullEikomiSummary().then(applyEikomiSummary);
-    }
-    if(window.FirebaseSync.watchEikomiSummary){
-      window.FirebaseSync.watchEikomiSummary(applyEikomiSummary);
-    }
+      // 英コミュアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
+      if(window.FirebaseSync.pullEikomiSummary){
+        window.FirebaseSync.pullEikomiSummary().then(applyEikomiSummary);
+      }
+      if(window.FirebaseSync.watchEikomiSummary){
+        window.FirebaseSync.watchEikomiSummary(applyEikomiSummary);
+      }
 
-    // LEAP単語帳アプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
-    if(window.FirebaseSync.pullLeapSummary){
-      window.FirebaseSync.pullLeapSummary().then(applyLeapSummary);
-    }
-    if(window.FirebaseSync.watchLeapSummary){
-      window.FirebaseSync.watchLeapSummary(applyLeapSummary);
+      // LEAP単語帳アプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
+      if(window.FirebaseSync.pullLeapSummary){
+        window.FirebaseSync.pullLeapSummary().then(applyLeapSummary);
+      }
+      if(window.FirebaseSync.watchLeapSummary){
+        window.FirebaseSync.watchLeapSummary(applyLeapSummary);
+      }
     }
   });
   window.addEventListener("firebaseAuthChanged", function(){ location.reload(); });
