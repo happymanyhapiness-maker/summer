@@ -29,7 +29,7 @@
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{ background:var(--page-bg); font-family:var(--font-body); color:var(--ink-900); display:flex; justify-content:center; -webkit-font-smoothing:antialiased; transition:background .15s ease; }
-  .frame{ width:100%; max-width:430px; min-height:100vh; min-height:100dvh; background:var(--bg); position:relative; padding-bottom:88px; }
+  .frame{ width:100%; max-width:430px; min-height:100vh; background:var(--bg); position:relative; padding-bottom:88px; }
   .app-header{ display:flex; align-items:center; justify-content:space-between; padding:calc(var(--sp-5) + 4px) var(--sp-5) var(--sp-5); background:linear-gradient(150deg,#111A24,#1B3A5C); color:#fff; border-radius:0 0 20px 20px; box-shadow:0 12px 26px -18px rgba(0,0,0,.7); margin-bottom:var(--sp-4); border-bottom:1px solid #24405C; }
   .app-header .icon-btn{ color:#fff; }
   .app-header .icon-btn:hover{ background:rgba(255,255,255,.1); }
@@ -262,7 +262,7 @@
 <link rel="stylesheet" href="dq-theme.css">
 </head>
 <body>
-<script type="module" src="dq-firebase-sync.js?v=1"></script>
+<script type="module" src="dq-firebase-sync.js?v=4"></script>
 <template id="__bundler_thumbnail" data-bg-color="#111A24">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="800" fill="#111A24"/>
@@ -450,7 +450,7 @@
 
     <section class="screen" id="screen-calendar">
       <section class="card" style="margin-top:var(--sp-4);">
-        <div class="card-title"><svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>予定</div>
+        <div class="card-title"><svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>カレンダー</div>
         <div class="cal-nav">
           <button id="calPrev">‹</button>
           <span id="calMonthLabel"></span>
@@ -521,6 +521,7 @@
           <button data-skin="ai">藍</button>
           <button data-skin="shu">朱</button>
           <button data-skin="zansho">残暑</button>
+          <button data-skin="yukari">紫</button>
         </div>
       </section>
       </div>
@@ -544,7 +545,7 @@
 
   <nav class="bottom-nav">
     <button class="nav-item active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span>ホーム</span></button>
-    <button class="nav-item" data-screen="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg><span>予定</span></button>
+    <button class="nav-item" data-screen="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg><span>カレンダー</span></button>
     <button class="nav-item" data-screen="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="7"/><line x1="19" y1="20" x2="19" y2="14"/></svg><span>記録</span></button>
     <button class="nav-item" data-screen="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V19a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.2a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.6 1z"/></svg><span>設定</span></button>
   </nav>
@@ -642,8 +643,7 @@ const V1_APP_LABEL = "アプリ学習";
 const V1_TOSHIN_LABELS = ["東進（英語）","東進（物理）","東進（数学）"];
 const V1_CAT_LABEL = {eng:"英語", math:"数学", other:"その他", app:"アプリ", toshin:"東進"};
 const EXAM_TYPE_NAMES = ["定期テスト・実力テスト","模試"];
-const SUBJECT_TAGS = ["現代文","古典","漢文","数学α","数学β","英語１","英語２","科学","物理","世界史","地理","自主学習"];
-const PRESETS_VERSION = 2;
+const SUBJECT_TAGS = ["国語","数学","英語","理科","社会","東進","英語塾"];
 const UNTAGGED = "未分類";
 function inferTag(catName){ return SUBJECT_TAGS.includes(catName) ? catName : UNTAGGED; }
 let freeAddTag = UNTAGGED;
@@ -671,20 +671,11 @@ function defaultStore(){
     toshinInitial: 40,
     badges: [],
     days: {},
-    presetsVersion: PRESETS_VERSION,
     presets: [
-      {id:uid("c"), name:"現代文", labels:["問題演習","音読"]},
-      {id:uid("c"), name:"古典", labels:["単語","文法"]},
-      {id:uid("c"), name:"漢文", labels:["句法","演習"]},
-      {id:uid("c"), name:"数学α", labels:["問題演習","復習"]},
-      {id:uid("c"), name:"数学β", labels:["問題演習","復習"]},
-      {id:uid("c"), name:"英語１", labels:["単語","文法"]},
-      {id:uid("c"), name:"英語２", labels:["リーディング","リスニング"]},
-      {id:uid("c"), name:"科学", labels:["演習","復習"]},
-      {id:uid("c"), name:"物理", labels:["演習","復習"]},
-      {id:uid("c"), name:"世界史", labels:["通史","一問一答"]},
-      {id:uid("c"), name:"地理", labels:["統計","一問一答"]},
-      {id:uid("c"), name:"自主学習", labels:["英コミュ","LEAP","数学アプリ"]}
+      {id:uid("c"), name:"英語", labels:["単語","文法","リーディング"]},
+      {id:uid("c"), name:"数学", labels:["問題演習","復習"]},
+      {id:uid("c"), name:"その他", labels:["国語","古文","漢文"]},
+      {id:uid("c"), name:"東進", labels:["東進（英語）","東進（物理）","東進（数学）"]}
     ]
   };
 }
@@ -849,10 +840,6 @@ function loadStore(){
       const parsed = JSON.parse(raw);
       if(!parsed.days) parsed.days = {};
       if(!parsed.presets) parsed.presets = defaultStore().presets;
-      if(parsed.presetsVersion !== PRESETS_VERSION){
-        parsed.presets = defaultStore().presets;
-        parsed.presetsVersion = PRESETS_VERSION;
-      }
       if(!parsed.eventTypes || !parsed.eventTypes.length) parsed.eventTypes = defaultEventTypes();
       parsed.eventTypes.forEach(t=>{ if(typeof t.examCountdown !== "boolean") t.examCountdown = EXAM_TYPE_NAMES.includes(t.name); });
       if(!parsed.appName) parsed.appName = "デイリークエスト";
@@ -877,10 +864,6 @@ function loadStore(){
       if(v1raw) migrated = migrateFromV1(v1raw);
     }
     const fresh = migrated || defaultStore();
-    if(fresh.presetsVersion !== PRESETS_VERSION){
-      fresh.presets = defaultStore().presets;
-      fresh.presetsVersion = PRESETS_VERSION;
-    }
     if(typeof fresh.toshinRemaining !== "number") fresh.toshinRemaining = 40;
     if(typeof fresh.toshinInitial !== "number") fresh.toshinInitial = Math.max(fresh.toshinRemaining, 40);
     if(!Array.isArray(fresh.badges)) fresh.badges = [];
@@ -1306,6 +1289,111 @@ function renderRecords(){
 
 const GAP_WARN_DAYS = 3;
 
+/* ===== kyotsu-mathアプリの学習ログ連携 =====
+   kyotsu-math側がFirestoreの kyotsu-math-summary/{CHILD_UID} に書いている
+   {lastStudiedAt, todayCount, totalCount} を読んで、
+   ・「数学」の教科ギャップ表示に反映
+   ・その日の演習実績があれば「数学」タグの自動クエストを完了扱いで積む
+   の2つに使う。 */
+let kyotsuMathSummary = null;
+const KYOTSU_MATH_TAG = "数学";
+const KYOTSU_MATH_AUTO_LABEL = "kyotsu-math（自動記録）";
+
+function applyKyotsuMathSummary(summary){
+  kyotsuMathSummary = summary || null;
+  if(!summary || !summary.lastStudiedAt) { renderRecords(); return; }
+
+  const d = new Date(summary.lastStudiedAt);
+  const key = toKey(d.getFullYear(), d.getMonth()+1, d.getDate());
+  const day = ensureDay(key);
+  let entry = day.quests.find(q=>q.autoSource==="kyotsu-math");
+  const label = summary.todayCount && key===todaySystemKey()
+    ? `${KYOTSU_MATH_AUTO_LABEL}（本日${summary.todayCount}問）`
+    : KYOTSU_MATH_AUTO_LABEL;
+
+  if(entry){
+    if(!entry.done || entry.label !== label){
+      entry.done = true;
+      entry.label = label;
+      persist();
+    }
+  } else {
+    day.quests.push({label, done:true, tag:KYOTSU_MATH_TAG, autoSource:"kyotsu-math"});
+    persist();
+  }
+  renderRecords();
+}
+
+/* ===== 英コミュアプリの学習ログ連携 =====
+   英コミュ側がFirestoreの eikomi-summary/{EIKOMI_FAMILY_ID} に書いている
+   {lastStudiedAt, todayCount, totalCount} を読んで、
+   ・「英語」の教科ギャップ表示に反映
+   ・その日の演習実績があれば「英語」タグの自動クエストを完了扱いで積む
+   の2つに使う。kyotsu-math連携と同じパターン。 */
+let eikomiSummary = null;
+const EIKOMI_TAG = "英語";
+const EIKOMI_AUTO_LABEL = "英コミュ（自動記録）";
+
+function applyEikomiSummary(summary){
+  eikomiSummary = summary || null;
+  if(!summary || !summary.lastStudiedAt) { renderRecords(); return; }
+
+  const d = new Date(summary.lastStudiedAt);
+  const key = toKey(d.getFullYear(), d.getMonth()+1, d.getDate());
+  const day = ensureDay(key);
+  let entry = day.quests.find(q=>q.autoSource==="eikomi");
+  const label = summary.todayCount && key===todaySystemKey()
+    ? `${EIKOMI_AUTO_LABEL}（本日${summary.todayCount}問）`
+    : EIKOMI_AUTO_LABEL;
+
+  if(entry){
+    if(!entry.done || entry.label !== label){
+      entry.done = true;
+      entry.label = label;
+      persist();
+    }
+  } else {
+    day.quests.push({label, done:true, tag:EIKOMI_TAG, autoSource:"eikomi"});
+    persist();
+  }
+  renderRecords();
+}
+
+/* ===== LEAP単語帳アプリの学習ログ連携 =====
+   LEAP側がFirestoreの leap-summary/{CHILD_UID} に書いている
+   {lastStudiedAt, todayCount, totalCount} を読んで、
+   ・「英語」の教科ギャップ表示に反映（英コミュと同じ「英語」タグ内に並べて表示）
+   ・その日の演習実績があれば「英語」タグの自動クエストを完了扱いで積む
+   の2つに使う。kyotsu-math/英コミュ連携と同じパターン。 */
+let leapSummary = null;
+const LEAP_TAG = "英語";
+const LEAP_AUTO_LABEL = "LEAP単語帳（自動記録）";
+
+function applyLeapSummary(summary){
+  leapSummary = summary || null;
+  if(!summary || !summary.lastStudiedAt) { renderRecords(); return; }
+
+  const d = new Date(summary.lastStudiedAt);
+  const key = toKey(d.getFullYear(), d.getMonth()+1, d.getDate());
+  const day = ensureDay(key);
+  let entry = day.quests.find(q=>q.autoSource==="leap");
+  const label = summary.todayCount && key===todaySystemKey()
+    ? `${LEAP_AUTO_LABEL}（本日${summary.todayCount}問）`
+    : LEAP_AUTO_LABEL;
+
+  if(entry){
+    if(!entry.done || entry.label !== label){
+      entry.done = true;
+      entry.label = label;
+      persist();
+    }
+  } else {
+    day.quests.push({label, done:true, tag:LEAP_TAG, autoSource:"leap"});
+    persist();
+  }
+  renderRecords();
+}
+
 function renderSubjectGapList(){
   const el = document.getElementById("subjectGapList");
   if(!el) return;
@@ -1329,7 +1417,19 @@ function renderSubjectGapList(){
       const label = gap === 0 ? "今日" : `${gap}日前`;
       sinceHtml = `<span class="subject-gap-since ${gap>=GAP_WARN_DAYS?'warn':''}">${label}</span>`;
     }
-    return `<div class="subject-gap-row"><span class="subject-gap-name">${tag}</span>${sinceHtml}</div>`;
+    let extraHtml = "";
+    if(tag===KYOTSU_MATH_TAG && kyotsuMathSummary && kyotsuMathSummary.todayCount){
+      extraHtml = `<span class="subject-gap-since" style="margin-left:6px;color:#166534;">（本日${kyotsuMathSummary.todayCount}問）</span>`;
+    }
+    if(tag===EIKOMI_TAG){
+      const parts = [];
+      if(eikomiSummary && eikomiSummary.todayCount) parts.push(`英コミュ${eikomiSummary.todayCount}問`);
+      if(leapSummary && leapSummary.todayCount) parts.push(`LEAP${leapSummary.todayCount}問`);
+      if(parts.length){
+        extraHtml = `<span class="subject-gap-since" style="margin-left:6px;color:#166534;">（本日${parts.join("・")}）</span>`;
+      }
+    }
+    return `<div class="subject-gap-row"><span class="subject-gap-name">${tag}</span><span>${sinceHtml}${extraHtml}</span></div>`;
   }).join("");
 }
 
@@ -1830,18 +1930,9 @@ function renderAccountArea(){
       const password = document.getElementById("fbPassword").value;
       const errEl = document.getElementById("fbLoginError");
       errEl.textContent = "";
-      if(!window.FirebaseSync){
-        errEl.textContent = "通信の準備中です。数秒待ってからもう一度お試しください。";
-        return;
-      }
       if(!email || !password){ errEl.textContent = "メールアドレスとパスワードを入力してください。"; return; }
-      const btn = document.getElementById("fbLoginBtn");
-      btn.disabled = true;
-      btn.textContent = "ログイン中…";
-      window.FirebaseSync.login(email, password).catch((e)=>{
+      fs.login(email, password).catch(()=>{
         errEl.textContent = "ログインに失敗しました。メールアドレスまたはパスワードが正しくありません。";
-        btn.disabled = false;
-        btn.textContent = "ログイン";
       });
     });
   } else {
@@ -2074,6 +2165,30 @@ if(window.FirebaseSync){
         pushStoreSnapshot();
       }
     });
+
+    // kyotsu-mathアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
+    if(window.FirebaseSync.pullKyotsuMathSummary){
+      window.FirebaseSync.pullKyotsuMathSummary().then(applyKyotsuMathSummary);
+    }
+    if(window.FirebaseSync.watchKyotsuMathSummary){
+      window.FirebaseSync.watchKyotsuMathSummary(applyKyotsuMathSummary);
+    }
+
+    // 英コミュアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
+    if(window.FirebaseSync.pullEikomiSummary){
+      window.FirebaseSync.pullEikomiSummary().then(applyEikomiSummary);
+    }
+    if(window.FirebaseSync.watchEikomiSummary){
+      window.FirebaseSync.watchEikomiSummary(applyEikomiSummary);
+    }
+
+    // LEAP単語帳アプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
+    if(window.FirebaseSync.pullLeapSummary){
+      window.FirebaseSync.pullLeapSummary().then(applyLeapSummary);
+    }
+    if(window.FirebaseSync.watchLeapSummary){
+      window.FirebaseSync.watchLeapSummary(applyLeapSummary);
+    }
   });
   window.addEventListener("firebaseAuthChanged", function(){ location.reload(); });
 }
