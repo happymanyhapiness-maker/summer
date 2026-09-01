@@ -262,7 +262,7 @@
 <link rel="stylesheet" href="dq-theme.css">
 </head>
 <body>
-<script type="module" src="dq-firebase-sync.js?v=1"></script>
+<script type="module" src="dq-firebase-sync.js?v=2"></script>
 <template id="__bundler_thumbnail" data-bg-color="#111A24">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="800" fill="#111A24"/>
@@ -1289,6 +1289,41 @@ function renderRecords(){
 
 const GAP_WARN_DAYS = 3;
 
+/* ===== kyotsu-mathアプリの学習ログ連携 =====
+   kyotsu-math側がFirestoreの kyotsu-math-summary/{CHILD_UID} に書いている
+   {lastStudiedAt, todayCount, totalCount} を読んで、
+   ・「数学」の教科ギャップ表示に反映
+   ・その日の演習実績があれば「数学」タグの自動クエストを完了扱いで積む
+   の2つに使う。 */
+let kyotsuMathSummary = null;
+const KYOTSU_MATH_TAG = "数学";
+const KYOTSU_MATH_AUTO_LABEL = "kyotsu-math（自動記録）";
+
+function applyKyotsuMathSummary(summary){
+  kyotsuMathSummary = summary || null;
+  if(!summary || !summary.lastStudiedAt) { renderRecords(); return; }
+
+  const d = new Date(summary.lastStudiedAt);
+  const key = toKey(d.getFullYear(), d.getMonth()+1, d.getDate());
+  const day = ensureDay(key);
+  let entry = day.quests.find(q=>q.autoSource==="kyotsu-math");
+  const label = summary.todayCount && key===todaySystemKey()
+    ? `${KYOTSU_MATH_AUTO_LABEL}（本日${summary.todayCount}問）`
+    : KYOTSU_MATH_AUTO_LABEL;
+
+  if(entry){
+    if(!entry.done || entry.label !== label){
+      entry.done = true;
+      entry.label = label;
+      persist();
+    }
+  } else {
+    day.quests.push({label, done:true, tag:KYOTSU_MATH_TAG, autoSource:"kyotsu-math"});
+    persist();
+  }
+  renderRecords();
+}
+
 function renderSubjectGapList(){
   const el = document.getElementById("subjectGapList");
   if(!el) return;
@@ -1312,7 +1347,11 @@ function renderSubjectGapList(){
       const label = gap === 0 ? "今日" : `${gap}日前`;
       sinceHtml = `<span class="subject-gap-since ${gap>=GAP_WARN_DAYS?'warn':''}">${label}</span>`;
     }
-    return `<div class="subject-gap-row"><span class="subject-gap-name">${tag}</span>${sinceHtml}</div>`;
+    let extraHtml = "";
+    if(tag===KYOTSU_MATH_TAG && kyotsuMathSummary && kyotsuMathSummary.todayCount){
+      extraHtml = `<span class="subject-gap-since" style="margin-left:6px;color:#166534;">（本日${kyotsuMathSummary.todayCount}問）</span>`;
+    }
+    return `<div class="subject-gap-row"><span class="subject-gap-name">${tag}</span><span>${sinceHtml}${extraHtml}</span></div>`;
   }).join("");
 }
 
@@ -2048,6 +2087,14 @@ if(window.FirebaseSync){
         pushStoreSnapshot();
       }
     });
+
+    // kyotsu-mathアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
+    if(window.FirebaseSync.pullKyotsuMathSummary){
+      window.FirebaseSync.pullKyotsuMathSummary().then(applyKyotsuMathSummary);
+    }
+    if(window.FirebaseSync.watchKyotsuMathSummary){
+      window.FirebaseSync.watchKyotsuMathSummary(applyKyotsuMathSummary);
+    }
   });
   window.addEventListener("firebaseAuthChanged", function(){ location.reload(); });
 }

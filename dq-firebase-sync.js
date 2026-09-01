@@ -39,6 +39,10 @@ const INDEPENDENT_UID = "IMu4q62RGbNs2y5MXu0yJ0OfYgU2";
 // このアプリ専用のコレクション名（LEAPの"logs"とは別物なので混ざらない）
 const LOGS_COLLECTION = "dailyquest-logs";
 
+// kyotsu-mathアプリ（共通テスト数学）が同期のたびに書き込む学習サマリー
+// {lastStudiedAt, todayCount, totalCount, updatedAt} だけの軽量ドキュメント
+const KYOTSU_MATH_SUMMARY_COLLECTION = "kyotsu-math-summary";
+
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
@@ -132,6 +136,23 @@ function watchChildLogs(callback){
   });
 }
 
+// ===== kyotsu-mathアプリの学習サマリー連携 =====
+// kyotsu-math側（firebase-sync.js）が同期のたびに書き込んでいる
+// {lastStudiedAt, todayCount, totalCount, updatedAt} を読むだけ。
+// 自分（子供本人）でログインしていても、admin（保護者）でログインしていても、
+// 常に子供のuid（CHILD_UID）を見に行く。
+function pullKyotsuMathSummary(){
+  return getDoc(doc(db,KYOTSU_MATH_SUMMARY_COLLECTION,CHILD_UID)).then(function(snap){
+    return snap.exists() ? snap.data() : null;
+  }).catch(function(){return null;});
+}
+
+function watchKyotsuMathSummary(callback){
+  return onSnapshot(doc(db,KYOTSU_MATH_SUMMARY_COLLECTION,CHILD_UID), function(snap){
+    callback(snap.exists() ? snap.data() : null);
+  }, function(){ /* 権限エラー等は無視して黙る */ });
+}
+
 window.FirebaseSync = {
   onReady: onReady,
   login: login,
@@ -142,6 +163,8 @@ window.FirebaseSync = {
   pushLogs: pushLogs,
   pullLogs: pullLogs,
   watchChildLogs: watchChildLogs,
+  pullKyotsuMathSummary: pullKyotsuMathSummary,
+  watchKyotsuMathSummary: watchKyotsuMathSummary,
   ADMIN_UID: ADMIN_UID,
   CHILD_UID: CHILD_UID,
   INDEPENDENT_UID: INDEPENDENT_UID
