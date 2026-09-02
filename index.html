@@ -267,90 +267,6 @@
     .cal-left{ flex:0 0 340px; }
     .cal-right{ flex:1; min-width:0; margin-top:0; padding-top:0; border-top:none; padding-left:var(--sp-5); border-left:1px solid var(--line); max-height:560px; overflow-y:auto; }
   }
-
-  /* ▼ iOS Safariのinput自動ズーム対策：font-sizeを16px以上に上げつつ、
-     transform:scale()で見た目のサイズを元のまま維持しています。
-     （フォーカス時に画面が拡大される問題の対策。詳しい仕組みはチャットで説明した通り） */
-
-  /* 自由入力のタグ追加欄（記録画面） */
-  .free-input-row .izf{ flex:1; height:37px; min-width:0; overflow:hidden; display:block; }
-  .free-input-row .izf > input{
-    width:123.0769%; height:123.0769%;
-    border:1.8462px solid var(--line); padding:12.3077px 19.6923px;
-    font-size:16px; font-family:var(--font-body); background:var(--surface-alt); color:var(--ink-900);
-    transform-origin:0 0; transform:scale(0.8125);
-  }
-  .free-input-row .izf > input:focus{ outline:none; border-color:var(--mint-500); }
-
-  /* カレンダー：予定を追加（予定名の自由入力） */
-  .event-add-row .izf{ flex:1 1 100px; height:32px; min-width:0; overflow:hidden; display:block; }
-  .event-add-row .izf > input{
-    width:133.3333%; height:133.3333%;
-    border:2px solid var(--line); padding:10.6667px 13.3333px;
-    font-size:16px; font-family:var(--font-body); background:var(--surface-alt); color:var(--ink-900);
-    transform-origin:0 0; transform:scale(0.75);
-  }
-  .event-add-row .izf > input:focus{ outline:none; border-color:var(--mint-500); }
-
-  /* その日のクエスト編集 */
-  .quest-edit-row .izf{ flex:1; height:30px; min-width:0; overflow:hidden; display:block; }
-  .quest-edit-row .izf > input{
-    width:128%; height:128%;
-    border:1.92px solid var(--line); padding:8.96px 15.36px;
-    font-size:16px; font-family:var(--font-body); background:var(--surface-alt); color:var(--ink-900);
-    transform-origin:0 0; transform:scale(0.78125);
-  }
-  .quest-edit-row .izf > input:focus{ outline:none; border-color:var(--mint-500); }
-
-  /* 予定の移動先の日付選択 */
-  .move-picker .izf{ width:100%; margin:var(--sp-3) 0; height:39px; min-width:0; overflow:hidden; display:block; }
-  .move-picker .izf > input{
-    width:123.0769%; height:123.0769%;
-    border:1.8462px solid var(--line); padding:12.3077px 17.2308px;
-    font-size:16px; font-family:var(--font-body); background:var(--surface-alt); color:var(--ink-900);
-    transform-origin:0 0; transform:scale(0.8125);
-  }
-  .move-picker .izf > input:focus{ outline:none; border-color:var(--mint-500); }
-
-  /* 設定：残りコマ／アプリ名／ログインのメール・パスワード */
-  .settings-num-row .izf{ flex:1; height:33px; min-width:0; overflow:hidden; display:block; }
-  .settings-num-row .izf > input{
-    width:123.0769%; height:123.0769%;
-    border:1.8462px solid var(--line); padding:9.8462px 12.3077px; border-radius:14.7692px;
-    font-size:16px; font-family:var(--font-body); background:var(--surface-alt); color:var(--ink-900);
-    transform-origin:0 0; transform:scale(0.8125); transition:border-color .15s ease;
-  }
-  .settings-num-row .izf > input:focus{ outline:none; border-color:var(--mint-500); }
-
-  /* 設定：クエスト選択肢の編集 */
-  .preset-edit-row .izf{ flex:1; height:30px; min-width:0; overflow:hidden; display:block; }
-  .preset-edit-row .izf > input{
-    width:128%; height:128%;
-    border:1.92px solid var(--line); padding:8.96px 12.8px; border-radius:15.36px;
-    font-size:16px; font-family:var(--font-body); background:var(--surface-alt); color:var(--ink-900);
-    transform-origin:0 0; transform:scale(0.78125);
-  }
-  .preset-edit-row .izf > input:focus{ outline:none; border-color:var(--mint-500); }
-
-  /* 設定：クエスト選択肢のカテゴリ名 */
-  .cat-manager-head .izf{ flex:1; height:31px; min-width:0; overflow:hidden; display:block; }
-  .cat-manager-head .izf > input{
-    width:123.0769%; height:123.0769%;
-    border:1.8462px solid var(--line); padding:8.6154px 12.3077px; border-radius:14.7692px;
-    font-size:16px; font-family:var(--font-body); background:var(--surface-alt); color:var(--ink-900);
-    transform-origin:0 0; transform:scale(0.8125); font-weight:700;
-  }
-  .cat-manager-head .izf > input:focus{ outline:none; border-color:var(--mint-500); }
-
-  /* 設定：予定タイプの管理（今回のご質問箇所） */
-  .type-manager-row .izf{ flex:1 1 100px; height:30px; min-width:0; overflow:hidden; display:block; }
-  .type-manager-row .izf > input{
-    width:128%; height:128%;
-    border:1.92px solid var(--line); padding:8.96px 12.8px; border-radius:15.36px;
-    font-size:16px; font-family:var(--font-body); background:var(--surface-alt); color:var(--ink-900);
-    transform-origin:0 0; transform:scale(0.78125);
-  }
-  .type-manager-row .izf > input:focus{ outline:none; border-color:var(--mint-500); }
 </style>
 <link rel="stylesheet" href="dq-theme.css">
 </head>
@@ -595,7 +511,7 @@
           <div class="card-title" style="margin-bottom:0;"><svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/><line x1="8" y1="9" x2="15" y2="9"/><line x1="8" y1="13" x2="15" y2="13"/></svg>東進 残りコマ設定</div>
           <button class="link-btn" id="saveToshinBtn">保存</button>
         </div>
-        <div class="settings-num-row"><span>残りコマ</span><span class="izf"><input type="number" id="set-toshin-remaining" min="0"></span></div>
+        <div class="settings-num-row"><span>残りコマ</span><input type="number" id="set-toshin-remaining" min="0"></div>
       </section>
 
       <section class="card">
@@ -604,7 +520,7 @@
           <button class="link-btn" id="saveNamesBtn">保存</button>
         </div>
         <div class="settings-block">
-          <div class="settings-num-row"><span class="izf"><input type="text" id="set-app-name"></span></div>
+          <div class="settings-num-row"><input type="text" id="set-app-name"></div>
         </div>
       </section>
       </div>
@@ -658,7 +574,7 @@
       <div id="addChipCats"></div>
       <div class="cat-name" style="margin-top:var(--sp-4);">自由入力のタグ</div>
       <div class="chip-row" id="freeTagRow"></div>
-      <div class="free-input-row"><span class="izf"><input type="text" id="freeInput" placeholder="自由入力（例：試験対策）"></span><button id="freeAddBtn">追加</button></div>
+      <div class="free-input-row"><input type="text" id="freeInput" placeholder="自由入力（例：試験対策）"><button id="freeAddBtn">追加</button></div>
     </div>
   </div>
 
@@ -675,7 +591,7 @@
       <div class="sheet-handle"></div>
       <div class="sheet-head"><div class="sheet-title" id="moveModalTitle">移動先を選択</div><button class="icon-btn" id="closeMoveModal" aria-label="閉じる"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button></div>
       <div class="move-picker">
-        <span class="izf"><input type="date" id="movePickerDate"></span>
+        <input type="date" id="movePickerDate">
         <div class="move-picker-actions">
           <button id="moveCancelBtn">キャンセル</button>
           <button class="primary" id="moveConfirmBtn">移動する</button>
@@ -1530,7 +1446,7 @@ document.getElementById("freeAddBtn").addEventListener("click", ()=>{
   const d = ensureDay(questTargetKey);
   d.quests.push({label:val, done:false, tag:freeAddTag});
   input.value = "";
-  input.focus();
+  input.blur();
   afterQuestChange();
   const btn = document.getElementById("freeAddBtn");
   btn.classList.add("flash");
@@ -1548,7 +1464,7 @@ function renderQuestEditList(){
         <button data-dir="up" ${i===0?'disabled':''}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
         <button data-dir="down" ${i===d.quests.length-1?'disabled':''}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
       </div>
-      <span class="izf"><input type="text" class="qe-label" value="${item.label}"></span>
+      <input type="text" class="qe-label" value="${item.label}">
       <select class="qe-tag">${SUBJECT_TAGS.concat([UNTAGGED]).map(tag=>`<option value="${tag}" ${((item.tag||UNTAGGED)===tag)?'selected':''}>${tag}</option>`).join("")}</select>
       <button class="del"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
     </div>
@@ -1770,7 +1686,7 @@ function openDayModal(key){
       <div id="dayEventList"></div>
       <div class="event-add-row">
         <select class="type-select" id="newEvType">${typeOptions(null)}</select>
-        <span class="izf" id="newEvLabelWrap" style="display:none;"><input type="text" id="newEvLabel" placeholder="予定名"></span>
+        <input type="text" id="newEvLabel" placeholder="予定名" style="display:none;">
         <select class="period-select" id="newEvPeriod">${periodOptions("am")}</select>
         <button class="link-btn" id="newEvAddBtn" style="flex:0 0 auto;">＋追加</button>
       </div>
@@ -1804,7 +1720,7 @@ function openDayModal(key){
 
     const typeSel = document.getElementById("newEvType");
     const labelInput = document.getElementById("newEvLabel");
-    typeSel.addEventListener("change", ()=>{ document.getElementById("newEvLabelWrap").style.display = typeSel.value ? "none" : ""; });
+    typeSel.addEventListener("change", ()=>{ labelInput.style.display = typeSel.value ? "none" : ""; });
     document.getElementById("newEvAddBtn").addEventListener("click", ()=>{
       const typeId = typeSel.value || null;
       const label = typeId ? null : (labelInput.value.trim() || "予定");
@@ -1949,8 +1865,8 @@ function renderAccountArea(){
   if(!uid){
     el.innerHTML = `
       <div style="font-size:12px; color:var(--ink-300); margin-bottom:var(--sp-3); line-height:1.6;">ログインすると、記録がクラウドにも保存され、複数端末で共有できます。ログインしなくてもこの端末だけで続けられます。</div>
-      <div class="settings-num-row"><span class="izf"><input type="email" id="fbEmail" placeholder="メールアドレス" autocomplete="username"></span></div>
-      <div class="settings-num-row"><span class="izf"><input type="password" id="fbPassword" placeholder="パスワード" autocomplete="current-password"></span></div>
+      <div class="settings-num-row"><input type="email" id="fbEmail" placeholder="メールアドレス" autocomplete="username"></div>
+      <div class="settings-num-row"><input type="password" id="fbPassword" placeholder="パスワード" autocomplete="current-password"></div>
       <div id="fbLoginError" style="font-size:11.5px; color:var(--danger-500); margin-bottom:var(--sp-2);"></div>
       <button class="save-btn" id="fbLoginBtn">ログイン</button>
     `;
@@ -2039,7 +1955,7 @@ function renderTypeEditors(){
   const wrap = document.getElementById("typeEditors");
   wrap.innerHTML = store.eventTypes.map(t=>`
     <div class="type-manager-row" data-id="${t.id}">
-      <span class="izf"><input type="text" class="type-name-input" value="${t.name}"></span>
+      <input type="text" class="type-name-input" value="${t.name}">
       <span class="type-color-preview" style="background:${t.color};"></span>
       <select class="type-color-select">${SWATCHES.map(s=>`<option value="${s.color}" ${s.color===t.color?'selected':''}>${s.name}</option>`).join("")}</select>
       <button class="type-manager-del"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
@@ -2078,7 +1994,7 @@ function renderPresetEditors(){
   wrap.innerHTML = store.presets.map(cat=>`
     <div class="cat-manager-block" data-id="${cat.id}">
       <div class="cat-manager-head">
-        <span class="izf"><input type="text" class="cat-name-input" value="${cat.name}"></span>
+        <input type="text" class="cat-name-input" value="${cat.name}">
         <button class="cat-del-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
       </div>
       <div id="presetList-${cat.id}"></div>
@@ -2100,7 +2016,7 @@ function renderPresetEditors(){
     const listEl = document.getElementById("presetList-"+cat.id);
     if(!listEl) return;
     listEl.innerHTML = cat.labels.map((label,i)=>`<div class="preset-edit-row">
-        <span class="izf"><input type="text" data-idx="${i}" value="${label}"></span>
+        <input type="text" data-idx="${i}" value="${label}">
         <button data-idx="${i}" class="del-preset"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
       </div>`).join("");
     listEl.querySelectorAll("input").forEach(inp=>{
