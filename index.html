@@ -29,7 +29,7 @@
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{ background:var(--page-bg); font-family:var(--font-body); color:var(--ink-900); display:flex; justify-content:center; -webkit-font-smoothing:antialiased; transition:background .15s ease; }
-  .frame{ width:100%; max-width:430px; min-height:100vh; background:var(--bg); position:relative; padding-bottom:88px; }
+  .frame{ width:100%; max-width:430px; min-height:100vh; min-height:100dvh; background:var(--bg); position:relative; padding-bottom:88px; }
   .app-header{ display:flex; align-items:center; justify-content:space-between; padding:calc(var(--sp-5) + 4px) var(--sp-5) var(--sp-5); background:linear-gradient(150deg,#111A24,#1B3A5C); color:#fff; border-radius:0 0 20px 20px; box-shadow:0 12px 26px -18px rgba(0,0,0,.7); margin-bottom:var(--sp-4); border-bottom:1px solid #24405C; }
   .app-header .icon-btn{ color:#fff; }
   .app-header .icon-btn:hover{ background:rgba(255,255,255,.1); }
@@ -63,6 +63,15 @@
   .records-tab-btn.active, .settings-tab-btn.active{ background:var(--mint-500); border-color:var(--mint-500); color:#fff; }
   .records-group, .settings-group{ display:none; }
   .records-group.active, .settings-group.active{ display:block; }
+
+  body.role-admin .nav-item[data-screen="home"],
+  body.role-admin .nav-item[data-screen="calendar"]{ display:none; }
+  body.role-admin #watchSyncBar{ display:flex; }
+  body.role-admin .settings-tab-btn[data-group="items"]{ display:none; }
+  body.role-admin .record-quest-row{ cursor:default !important; }
+
+  .login-status-icon{ width:30px; height:30px; border-radius:50%; border:1.5px solid rgba(255,255,255,.35); background:rgba(255,255,255,.08); color:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:background .15s ease, color .15s ease, border-color .15s ease; }
+  .login-status-icon.logged-in{ background:var(--mint-500); border-color:var(--mint-500); color:#fff; }
 
   .home-date-label{ font-size:12px; font-weight:700; color:var(--ink-500); margin:0 var(--sp-4) var(--sp-3); }
   .home-date-label{ font-family:var(--font-display); font-size:14px; font-weight:600; letter-spacing:.08em; }
@@ -262,7 +271,7 @@
 <link rel="stylesheet" href="dq-theme.css">
 </head>
 <body>
-<script type="module" src="dq-firebase-sync.js?v=4"></script>
+<script type="module" src="dq-firebase-sync.js?v=1"></script>
 <template id="__bundler_thumbnail" data-bg-color="#111A24">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="800" fill="#111A24"/>
@@ -281,10 +290,15 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4299FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
       <span id="appTitleText">デイリークエスト</span>
     </div>
-    <button class="weather-pill" id="weatherPillHeader" title="愛知県の天気予報を見る">
-      <span id="wIconHeader"></span>
-      <span class="wp-text"><span class="wp-temp" id="wTempHeader">--℃</span><span class="wp-loc">愛知県</span></span>
-    </button>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <button class="login-status-icon" id="loginStatusIcon" title="未ログイン">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      </button>
+      <button class="weather-pill" id="weatherPillHeader" title="愛知県の天気予報を見る">
+        <span id="wIconHeader"></span>
+        <span class="wp-text"><span class="wp-temp" id="wTempHeader">--℃</span><span class="wp-loc">愛知県</span></span>
+      </button>
+    </div>
   </header>
 
   <div id="periodBanner"></div>
@@ -359,6 +373,10 @@
     </section>
 
     <section class="screen" id="screen-records">
+      <div id="watchSyncBar" style="display:none; align-items:center; justify-content:space-between; margin-top:var(--sp-4); padding:10px 12px; border-radius:14px; background:var(--mint-50); font-size:11.5px; color:var(--ink-500); font-weight:600;">
+        <span id="watchSyncNote">読み込み中…</span>
+        <button id="watchRefreshBtn" class="link-btn">更新</button>
+      </div>
       <div class="records-tabs" style="display:flex; gap:6px; margin-top:var(--sp-4); margin-bottom:var(--sp-2);">
         <button class="records-tab-btn" data-group="overview">概要</button>
         <button class="records-tab-btn" data-group="calendar">振り返り</button>
@@ -450,7 +468,7 @@
 
     <section class="screen" id="screen-calendar">
       <section class="card" style="margin-top:var(--sp-4);">
-        <div class="card-title"><svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>カレンダー</div>
+        <div class="card-title"><svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>予定</div>
         <div class="cal-nav">
           <button id="calPrev">‹</button>
           <span id="calMonthLabel"></span>
@@ -521,7 +539,6 @@
           <button data-skin="ai">藍</button>
           <button data-skin="shu">朱</button>
           <button data-skin="zansho">残暑</button>
-          <button data-skin="yukari">紫</button>
         </div>
       </section>
       </div>
@@ -545,7 +562,7 @@
 
   <nav class="bottom-nav">
     <button class="nav-item active" data-screen="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span>ホーム</span></button>
-    <button class="nav-item" data-screen="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg><span>カレンダー</span></button>
+    <button class="nav-item" data-screen="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg><span>予定</span></button>
     <button class="nav-item" data-screen="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="7"/><line x1="19" y1="20" x2="19" y2="14"/></svg><span>記録</span></button>
     <button class="nav-item" data-screen="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V19a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.2a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.6 1z"/></svg><span>設定</span></button>
   </nav>
@@ -643,7 +660,8 @@ const V1_APP_LABEL = "アプリ学習";
 const V1_TOSHIN_LABELS = ["東進（英語）","東進（物理）","東進（数学）"];
 const V1_CAT_LABEL = {eng:"英語", math:"数学", other:"その他", app:"アプリ", toshin:"東進"};
 const EXAM_TYPE_NAMES = ["定期テスト・実力テスト","模試"];
-const SUBJECT_TAGS = ["国語","数学","英語","理科","社会","東進","英語塾"];
+const SUBJECT_TAGS = ["現代文","古典","漢文","数学α","数学β","英語１","英語２","科学","物理","世界史","地理","自主学習"];
+const PRESETS_VERSION = 2;
 const UNTAGGED = "未分類";
 function inferTag(catName){ return SUBJECT_TAGS.includes(catName) ? catName : UNTAGGED; }
 let freeAddTag = UNTAGGED;
@@ -671,11 +689,20 @@ function defaultStore(){
     toshinInitial: 40,
     badges: [],
     days: {},
+    presetsVersion: PRESETS_VERSION,
     presets: [
-      {id:uid("c"), name:"英語", labels:["単語","文法","リーディング"]},
-      {id:uid("c"), name:"数学", labels:["問題演習","復習"]},
-      {id:uid("c"), name:"その他", labels:["国語","古文","漢文"]},
-      {id:uid("c"), name:"東進", labels:["東進（英語）","東進（物理）","東進（数学）"]}
+      {id:uid("c"), name:"現代文", labels:["問題演習","音読"]},
+      {id:uid("c"), name:"古典", labels:["単語","文法"]},
+      {id:uid("c"), name:"漢文", labels:["句法","演習"]},
+      {id:uid("c"), name:"数学α", labels:["問題演習","復習"]},
+      {id:uid("c"), name:"数学β", labels:["問題演習","復習"]},
+      {id:uid("c"), name:"英語１", labels:["単語","文法"]},
+      {id:uid("c"), name:"英語２", labels:["リーディング","リスニング"]},
+      {id:uid("c"), name:"科学", labels:["演習","復習"]},
+      {id:uid("c"), name:"物理", labels:["演習","復習"]},
+      {id:uid("c"), name:"世界史", labels:["通史","一問一答"]},
+      {id:uid("c"), name:"地理", labels:["統計","一問一答"]},
+      {id:uid("c"), name:"自主学習", labels:["英コミュ","LEAP","数学アプリ"]}
     ]
   };
 }
@@ -840,6 +867,10 @@ function loadStore(){
       const parsed = JSON.parse(raw);
       if(!parsed.days) parsed.days = {};
       if(!parsed.presets) parsed.presets = defaultStore().presets;
+      if(parsed.presetsVersion !== PRESETS_VERSION){
+        parsed.presets = defaultStore().presets;
+        parsed.presetsVersion = PRESETS_VERSION;
+      }
       if(!parsed.eventTypes || !parsed.eventTypes.length) parsed.eventTypes = defaultEventTypes();
       parsed.eventTypes.forEach(t=>{ if(typeof t.examCountdown !== "boolean") t.examCountdown = EXAM_TYPE_NAMES.includes(t.name); });
       if(!parsed.appName) parsed.appName = "デイリークエスト";
@@ -864,6 +895,10 @@ function loadStore(){
       if(v1raw) migrated = migrateFromV1(v1raw);
     }
     const fresh = migrated || defaultStore();
+    if(fresh.presetsVersion !== PRESETS_VERSION){
+      fresh.presets = defaultStore().presets;
+      fresh.presetsVersion = PRESETS_VERSION;
+    }
     if(typeof fresh.toshinRemaining !== "number") fresh.toshinRemaining = 40;
     if(typeof fresh.toshinInitial !== "number") fresh.toshinInitial = Math.max(fresh.toshinRemaining, 40);
     if(!Array.isArray(fresh.badges)) fresh.badges = [];
@@ -877,7 +912,9 @@ function loadStore(){
 }
 
 let store = loadStore();
+let watchMode = false;
 function persist(){
+  if(watchMode) return;
   store._updatedAt = Date.now();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   scheduleCloudSync();
@@ -1289,111 +1326,6 @@ function renderRecords(){
 
 const GAP_WARN_DAYS = 3;
 
-/* ===== kyotsu-mathアプリの学習ログ連携 =====
-   kyotsu-math側がFirestoreの kyotsu-math-summary/{CHILD_UID} に書いている
-   {lastStudiedAt, todayCount, totalCount} を読んで、
-   ・「数学」の教科ギャップ表示に反映
-   ・その日の演習実績があれば「数学」タグの自動クエストを完了扱いで積む
-   の2つに使う。 */
-let kyotsuMathSummary = null;
-const KYOTSU_MATH_TAG = "数学";
-const KYOTSU_MATH_AUTO_LABEL = "kyotsu-math（自動記録）";
-
-function applyKyotsuMathSummary(summary){
-  kyotsuMathSummary = summary || null;
-  if(!summary || !summary.lastStudiedAt) { renderRecords(); return; }
-
-  const d = new Date(summary.lastStudiedAt);
-  const key = toKey(d.getFullYear(), d.getMonth()+1, d.getDate());
-  const day = ensureDay(key);
-  let entry = day.quests.find(q=>q.autoSource==="kyotsu-math");
-  const label = summary.todayCount && key===todaySystemKey()
-    ? `${KYOTSU_MATH_AUTO_LABEL}（本日${summary.todayCount}問）`
-    : KYOTSU_MATH_AUTO_LABEL;
-
-  if(entry){
-    if(!entry.done || entry.label !== label){
-      entry.done = true;
-      entry.label = label;
-      persist();
-    }
-  } else {
-    day.quests.push({label, done:true, tag:KYOTSU_MATH_TAG, autoSource:"kyotsu-math"});
-    persist();
-  }
-  renderRecords();
-}
-
-/* ===== 英コミュアプリの学習ログ連携 =====
-   英コミュ側がFirestoreの eikomi-summary/{EIKOMI_FAMILY_ID} に書いている
-   {lastStudiedAt, todayCount, totalCount} を読んで、
-   ・「英語」の教科ギャップ表示に反映
-   ・その日の演習実績があれば「英語」タグの自動クエストを完了扱いで積む
-   の2つに使う。kyotsu-math連携と同じパターン。 */
-let eikomiSummary = null;
-const EIKOMI_TAG = "英語";
-const EIKOMI_AUTO_LABEL = "英コミュ（自動記録）";
-
-function applyEikomiSummary(summary){
-  eikomiSummary = summary || null;
-  if(!summary || !summary.lastStudiedAt) { renderRecords(); return; }
-
-  const d = new Date(summary.lastStudiedAt);
-  const key = toKey(d.getFullYear(), d.getMonth()+1, d.getDate());
-  const day = ensureDay(key);
-  let entry = day.quests.find(q=>q.autoSource==="eikomi");
-  const label = summary.todayCount && key===todaySystemKey()
-    ? `${EIKOMI_AUTO_LABEL}（本日${summary.todayCount}問）`
-    : EIKOMI_AUTO_LABEL;
-
-  if(entry){
-    if(!entry.done || entry.label !== label){
-      entry.done = true;
-      entry.label = label;
-      persist();
-    }
-  } else {
-    day.quests.push({label, done:true, tag:EIKOMI_TAG, autoSource:"eikomi"});
-    persist();
-  }
-  renderRecords();
-}
-
-/* ===== LEAP単語帳アプリの学習ログ連携 =====
-   LEAP側がFirestoreの leap-summary/{CHILD_UID} に書いている
-   {lastStudiedAt, todayCount, totalCount} を読んで、
-   ・「英語」の教科ギャップ表示に反映（英コミュと同じ「英語」タグ内に並べて表示）
-   ・その日の演習実績があれば「英語」タグの自動クエストを完了扱いで積む
-   の2つに使う。kyotsu-math/英コミュ連携と同じパターン。 */
-let leapSummary = null;
-const LEAP_TAG = "英語";
-const LEAP_AUTO_LABEL = "LEAP単語帳（自動記録）";
-
-function applyLeapSummary(summary){
-  leapSummary = summary || null;
-  if(!summary || !summary.lastStudiedAt) { renderRecords(); return; }
-
-  const d = new Date(summary.lastStudiedAt);
-  const key = toKey(d.getFullYear(), d.getMonth()+1, d.getDate());
-  const day = ensureDay(key);
-  let entry = day.quests.find(q=>q.autoSource==="leap");
-  const label = summary.todayCount && key===todaySystemKey()
-    ? `${LEAP_AUTO_LABEL}（本日${summary.todayCount}問）`
-    : LEAP_AUTO_LABEL;
-
-  if(entry){
-    if(!entry.done || entry.label !== label){
-      entry.done = true;
-      entry.label = label;
-      persist();
-    }
-  } else {
-    day.quests.push({label, done:true, tag:LEAP_TAG, autoSource:"leap"});
-    persist();
-  }
-  renderRecords();
-}
-
 function renderSubjectGapList(){
   const el = document.getElementById("subjectGapList");
   if(!el) return;
@@ -1417,19 +1349,7 @@ function renderSubjectGapList(){
       const label = gap === 0 ? "今日" : `${gap}日前`;
       sinceHtml = `<span class="subject-gap-since ${gap>=GAP_WARN_DAYS?'warn':''}">${label}</span>`;
     }
-    let extraHtml = "";
-    if(tag===KYOTSU_MATH_TAG && kyotsuMathSummary && kyotsuMathSummary.todayCount){
-      extraHtml = `<span class="subject-gap-since" style="margin-left:6px;color:#166534;">（本日${kyotsuMathSummary.todayCount}問）</span>`;
-    }
-    if(tag===EIKOMI_TAG){
-      const parts = [];
-      if(eikomiSummary && eikomiSummary.todayCount) parts.push(`英コミュ${eikomiSummary.todayCount}問`);
-      if(leapSummary && leapSummary.todayCount) parts.push(`LEAP${leapSummary.todayCount}問`);
-      if(parts.length){
-        extraHtml = `<span class="subject-gap-since" style="margin-left:6px;color:#166534;">（本日${parts.join("・")}）</span>`;
-      }
-    }
-    return `<div class="subject-gap-row"><span class="subject-gap-name">${tag}</span><span>${sinceHtml}${extraHtml}</span></div>`;
+    return `<div class="subject-gap-row"><span class="subject-gap-name">${tag}</span>${sinceHtml}</div>`;
   }).join("");
 }
 
@@ -1660,12 +1580,14 @@ function renderRecordDayDetail(){
   box.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
       <div style="font-family:var(--font-display); font-weight:700; font-size:13.5px; color:var(--ink-900);">${fmtJP(key)}</div>
-      <button id="recordAddQuestBtn" class="chip" style="padding:4px 10px;">＋ 追加</button>
+      ${watchMode ? "" : `<button id="recordAddQuestBtn" class="chip" style="padding:4px 10px;">＋ 追加</button>`}
     </div>
     <div style="font-family:var(--font-display); font-weight:900; font-size:16px; color:var(--mint-500); margin-bottom:4px;">クエスト ${s.done}/${s.total} 完了</div>
     ${eventLines.length ? `<div style="font-size:12px; color:var(--ink-500); font-weight:500; line-height:1.7; margin-bottom:8px;">${eventLines.join("<br>")}</div>` : ""}
     ${questHtml}
   `;
+
+  if(watchMode) return;
 
   const addBtn = document.getElementById("recordAddQuestBtn");
   if(addBtn) addBtn.addEventListener("click", ()=> openAddModal(key));
@@ -1911,11 +1833,33 @@ function renderSettings(){
 
 const ROLE_LABEL = {admin:"保護者", child:"本人", independent:"individual"};
 
+function updateLoginStatusIcon(fs, uid){
+  const icon = document.getElementById("loginStatusIcon");
+  if(!icon) return;
+  if(uid && fs){
+    const role = fs.currentRole();
+    icon.classList.add("logged-in");
+    icon.title = `ログイン中：${fs.currentEmail()||""}（${ROLE_LABEL[role]||"不明"}）`;
+  } else {
+    icon.classList.remove("logged-in");
+    icon.title = "未ログイン（タップで設定を開く）";
+  }
+}
+document.getElementById("loginStatusIcon").addEventListener("click", ()=>{
+  document.querySelectorAll(".nav-item").forEach(b=> b.classList.remove("active"));
+  const settingsNav = document.querySelector('.nav-item[data-screen="settings"]');
+  if(settingsNav) settingsNav.classList.add("active");
+  document.querySelectorAll(".screen").forEach(s=> s.classList.remove("active"));
+  document.getElementById("screen-settings").classList.add("active");
+  setSettingsSubTab("other");
+});
+
 function renderAccountArea(){
   const el = document.getElementById("accountArea");
   if(!el) return;
   const fs = window.FirebaseSync;
   const uid = fs ? fs.currentUid() : null;
+  updateLoginStatusIcon(fs, uid);
 
   if(!uid){
     el.innerHTML = `
@@ -1930,25 +1874,31 @@ function renderAccountArea(){
       const password = document.getElementById("fbPassword").value;
       const errEl = document.getElementById("fbLoginError");
       errEl.textContent = "";
+      if(!window.FirebaseSync){
+        errEl.textContent = "通信の準備中です。数秒待ってからもう一度お試しください。";
+        return;
+      }
       if(!email || !password){ errEl.textContent = "メールアドレスとパスワードを入力してください。"; return; }
-      fs.login(email, password).catch(()=>{
+      const btn = document.getElementById("fbLoginBtn");
+      btn.disabled = true;
+      btn.textContent = "ログイン中…";
+      window.FirebaseSync.login(email, password).catch((e)=>{
         errEl.textContent = "ログインに失敗しました。メールアドレスまたはパスワードが正しくありません。";
+        btn.disabled = false;
+        btn.textContent = "ログイン";
       });
     });
   } else {
     const role = fs.currentRole();
     el.innerHTML = `
       <div style="font-size:12.5px; color:var(--ink-900); font-weight:700; margin-bottom:2px;">${fs.currentEmail()||"ログイン中"}</div>
-      <div style="font-size:11px; color:var(--ink-300); margin-bottom:var(--sp-3);">ロール: ${ROLE_LABEL[role]||"不明"}・記録は自動でクラウドに保存されています</div>
-      ${role==="admin" ? `<button class="cat-add-btn" id="watchChildBtn">👀 子供の様子を見る</button>` : ""}
+      <div style="font-size:11px; color:var(--ink-300); margin-bottom:var(--sp-3);">ロール: ${ROLE_LABEL[role]||"不明"}${role==="admin" ? "・下の「見守り」タブから子供の記録を見られます" : "・記録は自動でクラウドに保存されています"}</div>
       <button class="save-btn" id="fbLogoutBtn" style="background:transparent; color:var(--danger-500); border:1px solid var(--danger-500);">ログアウト</button>
     `;
     document.getElementById("fbLogoutBtn").addEventListener("click", ()=>{
       if(!window.confirm("ログアウトしますか？この端末の記録は残りますが、クラウドとの同期は止まります。")) return;
       fs.logout();
     });
-    const watchBtn = document.getElementById("watchChildBtn");
-    if(watchBtn) watchBtn.addEventListener("click", openWatchModal);
   }
 }
 
@@ -2146,19 +2096,64 @@ function renderAllScreens(){
   renderRecords();
   renderSettings();
 }
-(function waitForFirebaseSync(){
-  // dq-firebase-sync.jsはtype="module"（自動的にdeferされ、HTML解析が
-  // すべて終わってから実行される）なのに対し、このスクリプトは普通の
-  // <script>としてHTML解析中にその場で同期実行される。そのため単純に
-  // if(window.FirebaseSync){...}と一度だけ判定すると、まだモジュールの
-  // 読み込みが終わっておらずwindow.FirebaseSyncが存在しない状態で
-  // チェックが失敗し、以下の自動連携登録が一度も実行されない
-  // （＝クラウド同期・自動クエスト反映が動かない）バグがあった。
-  // window.FirebaseSyncが実際に使えるようになるまで待ってから実行する。
-  if(!window.FirebaseSync){ setTimeout(waitForFirebaseSync, 50); return; }
+
+/* ===== 見守りモード（保護者ログイン時） ===== */
+function enterWatchMode(){
+  watchMode = true;
+  document.body.classList.add("role-admin");
+  const recNav = document.querySelector('.nav-item[data-screen="records"]');
+  if(recNav){
+    const label = recNav.querySelector("span");
+    if(label) label.textContent = "見守り";
+  }
+  document.querySelectorAll(".nav-item").forEach(b=> b.classList.remove("active"));
+  if(recNav) recNav.classList.add("active");
+  document.querySelectorAll(".screen").forEach(s=> s.classList.remove("active"));
+  document.getElementById("screen-records").classList.add("active");
+  setRecordsSubTab("overview");
+  setSettingsSubTab("other");
+  loadWatchData();
+  const refreshBtn = document.getElementById("watchRefreshBtn");
+  if(refreshBtn) refreshBtn.addEventListener("click", loadWatchData);
+}
+
+function loadWatchData(){
+  const note = document.getElementById("watchSyncNote");
+  if(note) note.textContent = "読み込み中…";
+  window.FirebaseSync.pullLogs(window.FirebaseSync.CHILD_UID).then(function(remote){
+    if(!remote || !remote.data){
+      if(note) note.textContent = "まだ子供の記録がありません。子供がログインして記録すると、ここに表示されます。";
+      return;
+    }
+    let cs;
+    try{ cs = JSON.parse(remote.data); }catch(e){
+      if(note) note.textContent = "データの読み込みに失敗しました。";
+      return;
+    }
+    store = cs;
+    activeDate = todaySystemKey();
+    selectedRecordDate = activeDate;
+    const d0 = parseKey(activeDate);
+    calView = { y:d0.getFullYear(), m:d0.getMonth()+1 };
+    heatmapView = { y:d0.getFullYear(), m:d0.getMonth()+1 };
+    renderRecords();
+    if(note){
+      let updatedLabel = "-";
+      try{ if(remote.updatedAt && remote.updatedAt.toDate) updatedLabel = remote.updatedAt.toDate().toLocaleString("ja-JP"); }catch(e){}
+      note.textContent = "最終同期: " + updatedLabel;
+    }
+  }).catch(function(){
+    if(note) note.textContent = "読み込みに失敗しました。通信環境を確認してもう一度お試しください。";
+  });
+}
+if(window.FirebaseSync){
   window.FirebaseSync.onReady(function(user){
     renderSettings();
     if(!user) return;
+    if(window.FirebaseSync.currentRole() === "admin"){
+      enterWatchMode();
+      return;
+    }
     window.FirebaseSync.pullLogs().then(function(remote){
       if(!remote || !remote.data){ pushStoreSnapshot(); return; }
       let remoteStore;
@@ -2173,47 +2168,10 @@ function renderAllScreens(){
       } else if(localTs > remoteTs){
         pushStoreSnapshot();
       }
-    }).catch(function(){}).then(function(){
-      // 注意: 上のpullLogs().then(...)によるstoreの取り込み（リモートの方が新しければ
-      // storeをまるごと入れ替える）が終わってから、この下の自動連携を実行すること。
-      // 順番を入れ替えて並行に走らせると、下で追加したクエストが上のstore入れ替えで
-      // 消されてしまう（実際に起きていたバグ）。
-
-      // 各アプリの学習ログ自動連携（kyotsu-math／英コミュ／LEAP）は、
-      // 子供本人がログインしているときだけ動かす。
-      // 親（admin）でログインしたときにこれを動かすと、子供の学習内容から
-      // 自動生成したクエストが親自身のdailyquest-logs（ADMIN_UID）に書き込まれてしまい、
-      // 親のログと子供のログが混ざってしまうため。
-      // 親が子供の様子を見たいときは「👀 子供の様子を見る」ボタン（読み取り専用）を使う。
-      if(window.FirebaseSync.currentRole && window.FirebaseSync.currentRole()==="child"){
-        // kyotsu-mathアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
-        if(window.FirebaseSync.pullKyotsuMathSummary){
-          window.FirebaseSync.pullKyotsuMathSummary().then(applyKyotsuMathSummary);
-        }
-        if(window.FirebaseSync.watchKyotsuMathSummary){
-          window.FirebaseSync.watchKyotsuMathSummary(applyKyotsuMathSummary);
-        }
-
-        // 英コミュアプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
-        if(window.FirebaseSync.pullEikomiSummary){
-          window.FirebaseSync.pullEikomiSummary().then(applyEikomiSummary);
-        }
-        if(window.FirebaseSync.watchEikomiSummary){
-          window.FirebaseSync.watchEikomiSummary(applyEikomiSummary);
-        }
-
-        // LEAP単語帳アプリの学習ログ連携（初回取得＋以後はリアルタイム反映）
-        if(window.FirebaseSync.pullLeapSummary){
-          window.FirebaseSync.pullLeapSummary().then(applyLeapSummary);
-        }
-        if(window.FirebaseSync.watchLeapSummary){
-          window.FirebaseSync.watchLeapSummary(applyLeapSummary);
-        }
-      }
     });
   });
   window.addEventListener("firebaseAuthChanged", function(){ location.reload(); });
-})();
+}
 </script>
 </div>
 </body>
