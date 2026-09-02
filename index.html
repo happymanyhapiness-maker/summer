@@ -2147,7 +2147,14 @@ function loadWatchData(){
     if(note) note.textContent = "読み込みに失敗しました。通信環境を確認してもう一度お試しください。";
   });
 }
-if(window.FirebaseSync){
+function initFirebaseBootstrap(){
+  if(!window.FirebaseSync){
+    // dq-firebase-sync.js は type="module" で読み込んでいるため、
+    // このクラシックscriptの実行タイミングではまだ読み込み終わっていないことがある。
+    // window.FirebaseSyncが生えるまで少し待ってからリトライする。
+    setTimeout(initFirebaseBootstrap, 50);
+    return;
+  }
   window.FirebaseSync.onReady(function(user){
     renderSettings();
     if(!user) return;
@@ -2173,6 +2180,7 @@ if(window.FirebaseSync){
   });
   window.addEventListener("firebaseAuthChanged", function(){ location.reload(); });
 }
+initFirebaseBootstrap();
 </script>
 </div>
 </body>
