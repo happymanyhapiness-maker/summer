@@ -412,8 +412,11 @@
       </section>
 
       <section class="card">
-        <div class="card-title"><svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>科目のごぶさたチェック</div>
-        <div id="subjectGapList"></div>
+        <button id="subjectGapToggle" class="card-title-row" style="width:100%; background:none; border:none; padding:0; cursor:pointer; text-align:left;">
+          <div class="card-title" style="margin-bottom:0;"><svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>科目のごぶさたチェック</div>
+          <svg id="subjectGapChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ink-300); transition:transform .15s ease;"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <div id="subjectGapList" style="display:none; margin-top:var(--sp-3);"></div>
       </section>
 
       <section class="card">
@@ -1353,6 +1356,14 @@ function renderSubjectGapList(){
     return `<div class="subject-gap-row"><span class="subject-gap-name">${tag}</span>${sinceHtml}</div>`;
   }).join("");
 }
+
+document.getElementById("subjectGapToggle").addEventListener("click", ()=>{
+  const list = document.getElementById("subjectGapList");
+  const chevron = document.getElementById("subjectGapChevron");
+  const open = list.style.display !== "none";
+  list.style.display = open ? "none" : "block";
+  if(chevron) chevron.style.transform = open ? "rotate(0deg)" : "rotate(90deg)";
+});
 
 function renderLogTable(){
   const el = document.getElementById("logTable");
