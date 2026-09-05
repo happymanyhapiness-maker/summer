@@ -664,8 +664,8 @@ const V1_APP_LABEL = "アプリ学習";
 const V1_TOSHIN_LABELS = ["東進（英語）","東進（物理）","東進（数学）"];
 const V1_CAT_LABEL = {eng:"英語", math:"数学", other:"その他", app:"アプリ", toshin:"東進"};
 const EXAM_TYPE_NAMES = ["定期テスト・実力テスト","模試"];
-const SUBJECT_TAGS = ["現代文","古典","漢文","数学α","数学β","英語１","英語２","科学","物理","世界史","地理","自主学習"];
-const PRESETS_VERSION = 3;
+const SUBJECT_TAGS = ["現代文","古典","漢文","数学α","数学β","英語１","英語２","科学","物理","世界史","地理","自主学習","英語塾"];
+const PRESETS_VERSION = 4;
 const UNTAGGED = "未分類";
 function inferTag(catName){ return SUBJECT_TAGS.includes(catName) ? catName : UNTAGGED; }
 let freeAddTag = UNTAGGED;
@@ -707,6 +707,7 @@ function defaultStore(){
       {id:uid("c"), name:"世界史", labels:["通史","一問一答"]},
       {id:uid("c"), name:"地理", labels:["統計","一問一答"]},
       {id:uid("c"), name:"自主学習", labels:["英コミュ","LEAP","数学アプリ"]},
+      {id:uid("c"), name:"英語塾", labels:["課題"]},
       {id:uid("c"), name:"東進", labels:["英語","数学","物理"]}
     ]
   };
