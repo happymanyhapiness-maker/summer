@@ -2187,6 +2187,10 @@ function loadWatchData(){
     calView = { y:d0.getFullYear(), m:d0.getMonth()+1 };
     heatmapView = { y:d0.getFullYear(), m:d0.getMonth()+1 };
     renderRecords();
+    // 概要の「今日の記録」カード（達成数・リング・日目・直近2週間）はホーム描画（renderHome）側で描いているので、
+    // 子どものデータ（＋LEAP自動記録）を読み込んだ後にここで描き直す（見守りではホーム描画全体は呼ばない）
+    renderResults();
+    renderProgressCard();
     if(note){
       let updatedLabel = "-";
       try{ if(remote.updatedAt && remote.updatedAt.toDate) updatedLabel = remote.updatedAt.toDate().toLocaleString("ja-JP"); }catch(e){}
