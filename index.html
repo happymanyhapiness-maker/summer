@@ -273,6 +273,7 @@
 </head>
 <body>
 <script type="module" src="dq-firebase-sync.js?v=1"></script>
+<script src="dq-leap-auto.js?v=1"></script>
 <template id="__bundler_thumbnail" data-bg-color="#111A24">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="800" fill="#111A24"/>
@@ -938,6 +939,30 @@ function pushStoreSnapshot(){
 }
 
 function dayData(key){ return store.days[key] || defaultDay(); }
+
+/* ===== LEAP単語帳の自動記録（dq-leap-auto.js） =====
+   leapAuto は LEAP 側だけが書く別フィールド（dailyquest-logs/{uid}.leapAuto）。この画面では読むだけで、store には入れない。
+   表示・集計は dispQuests / dispItems で通常クエストと合成する（同じ日に以前の手動反映 autoSource:"leap" があれば表示から外す）。 */
+const LEAP_AUTO_CACHE_KEY = "dailyquest_leap_auto_v1";
+let leapAuto = {};
+function loadLeapAutoCache(){
+  try{ return DQLeapAuto.normalizeLeapAuto(JSON.parse(localStorage.getItem(LEAP_AUTO_CACHE_KEY) || "{}")); }catch(e){ return {}; }
+}
+function setLeapAuto(raw, persistCache){
+  leapAuto = DQLeapAuto.normalizeLeapAuto(raw);
+  if(persistCache){ try{ localStorage.setItem(LEAP_AUTO_CACHE_KEY, JSON.stringify(leapAuto)); }catch(e){} }
+  // LEAPの過去日が記録開始日より前なら、振り返りカレンダーでタップできるよう開始日を繰り上げる（store自身の設定）
+  const first = DQLeapAuto.earliestLeapDate(leapAuto);
+  if(first && (!store.appStartDate || first < store.appStartDate)){
+    store.appStartDate = first;
+    if(!watchMode) persist();
+  }
+}
+function dispQuests(key){ return DQLeapAuto.displayQuests(dayData(key).quests, leapAuto, key); }
+function dispItems(key){ return DQLeapAuto.displayItems(dayData(key).quests, leapAuto, key); }
+function allDayKeys(){ return DQLeapAuto.allDayKeys(store.days, leapAuto); }
+// 起動直後はキャッシュ（前回読んだleapAuto）で表示し、記録開始日も合わせる。クラウドを読んだら最新に置き換える
+setLeapAuto(loadLeapAutoCache(), false);
 function ensureDay(key){ if(!store.days[key]) store.days[key] = defaultDay(); return store.days[key]; }
 function typeById(id){ return store.eventTypes.find(t=>t.id===id); }
 
@@ -1039,8 +1064,8 @@ function awardBadge(key, label){
 
 function totalDoneQuestCount(){
   let n = 0;
-  Object.keys(store.days).forEach(k=>{
-    n += store.days[k].quests.filter(q=>q.done).length;
+  allDayKeys().forEach(k=>{
+    n += dispItems(k).filter(q=>q.done).length;
   });
   return n;
 }
@@ -1051,7 +1076,7 @@ function weeklyStats(){
   const tagCount = {};
   let k = from < store.appStartDate ? store.appStartDate : from;
   while(k <= activeDate){
-    const q = dayData(k).quests;
+    const q = dispItems(k);
     done += q.filter(x=>x.done).length;
     total += q.length;
     q.forEach(item=>{
@@ -1110,20 +1135,26 @@ function toggleQuestState(idx){
 }
 
 function renderQuests(){
-  const q = dayData(activeDate).quests;
+  const q = dispQuests(activeDate);
   const el = document.getElementById("questList");
   if(!q.length){
     el.innerHTML = `<div class="quest-empty">「クエストを追加」から今日やることを登録しよう</div>`;
     return;
   }
-  el.innerHTML = q.map((item,i)=>`
-    <div class="quest-item ${item.done?'done':''}" data-idx="${i}">
+  // LEAPの自動記録は読み取り専用（チェック・削除できない）。通常クエストは store の添字(idx)で操作する
+  el.innerHTML = q.map(x=> x.auto ? `
+    <div class="quest-item done quest-auto" data-auto="1">
       <div class="checkbox">${checkSVG()}</div>
-      <div class="quest-label">${item.label}</div>
+      <div class="quest-label">${x.item.label}</div>
+    </div>
+  ` : `
+    <div class="quest-item ${x.item.done?'done':''}" data-idx="${x.idx}">
+      <div class="checkbox">${checkSVG()}</div>
+      <div class="quest-label">${x.item.label}</div>
       <svg class="quest-del" data-del="1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
     </div>
   `).join("");
-  el.querySelectorAll(".quest-item").forEach(item=>{
+  el.querySelectorAll(".quest-item:not([data-auto])").forEach(item=>{
     item.querySelector(".checkbox").addEventListener("click", (e)=>{
       e.stopPropagation();
       toggleQuestState(+item.dataset.idx);
@@ -1142,7 +1173,7 @@ function renderQuests(){
 }
 
 function renderResults(){
-  const q = dayData(activeDate).quests;
+  const q = dispItems(activeDate);
   const totalDone = q.filter(x=>x.done).length;
   const total = q.length;
   document.getElementById("questCount").textContent = `${totalDone} / ${total} クリア`;
@@ -1189,7 +1220,7 @@ function renderProgressCard(){
 }
 
 function dayQuestStats(key){
-  const q = dayData(key).quests;
+  const q = dispItems(key);
   return {done: q.filter(x=>x.done).length, total: q.length};
 }
 
@@ -1255,7 +1286,8 @@ function generateLogText(){
     const evText = d.events.length
       ? d.events.map(e=> `${eventLabel(e)}:${d.eventDone[e.id]?"完了":"未完了"}`).join("、")
       : "予定なし";
-    const questDetail = d.quests.length ? d.quests.map(item=> `${item.done?"[済]":"[未]"}${item.label}`).join("、") : "なし";
+    const dq = dispItems(k);
+    const questDetail = dq.length ? dq.map(item=> `${item.done?"[済]":"[未]"}${item.label}`).join("、") : "なし";
     lines.push(`${k}（${WD_JP[weekdayIdx(k)]}）`);
     lines.push(`  クエスト達成: ${s.done}/${s.total}（${pct}%） - ${questDetail}`);
     lines.push(`  予定: ${evText}`);
@@ -1336,9 +1368,9 @@ function renderSubjectGapList(){
   const el = document.getElementById("subjectGapList");
   if(!el) return;
   const lastDone = {};
-  Object.keys(store.days).sort().forEach(k=>{
+  allDayKeys().forEach(k=>{
     if(k > activeDate) return;
-    store.days[k].quests.forEach(item=>{
+    dispItems(k).forEach(item=>{
       if(!item.done) return;
       const tag = item.tag || UNTAGGED;
       if(tag === UNTAGGED) return;
@@ -1582,10 +1614,12 @@ function renderRecordDayDetail(){
   const eventLines = d.events.map(e=> `${eventLabel(e)}（${PERIOD_LABEL[e.period]||e.period}）：${d.eventDone[e.id]?"完了":"未完了"}`);
 
   let questHtml = "";
-  d.quests.forEach((item,i)=>{
+  dispQuests(key).forEach(x=>{
+    const item = x.item;
     const color = item.done ? "var(--ink-500)" : "var(--ink-300)";
     const tag = item.tag && item.tag !== UNTAGGED ? `<span style="color:var(--ink-300); font-weight:600; margin-right:6px;">[${item.tag}]</span>` : "";
-    questHtml += `<div class="record-quest-row" data-idx="${i}" style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--line); cursor:pointer;">
+    // LEAPの自動記録は読み取り専用（record-quest-rowにしない＝タップで切り替えない）
+    questHtml += `<div class="${x.auto?'record-quest-auto':'record-quest-row'}" data-idx="${x.idx}" style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--line); cursor:${x.auto?'default':'pointer'};">
       <span>${tag}${item.label}</span><span style="color:${color}; font-weight:700;">${item.done?"済":"未"}</span>
     </div>`;
   });
@@ -1931,7 +1965,7 @@ function openWatchModal(){
     let cs;
     try{ cs = JSON.parse(remote.data); }catch(e){ el.innerHTML = "データの読み込みに失敗しました。"; return; }
     const today = todaySystemKey();
-    const q = (cs.days && cs.days[today] && cs.days[today].quests) || [];
+    const q = DQLeapAuto.displayItems((cs.days && cs.days[today] && cs.days[today].quests) || [], DQLeapAuto.normalizeLeapAuto(remote.leapAuto), today);
     const done = q.filter(x=>x.done).length;
     const total = q.length;
     let updatedLabel = "—";
@@ -2146,6 +2180,7 @@ function loadWatchData(){
       return;
     }
     store = cs;
+    setLeapAuto(remote.leapAuto, false);
     activeDate = todaySystemKey();
     selectedRecordDate = activeDate;
     const d0 = parseKey(activeDate);
@@ -2177,7 +2212,10 @@ function initFirebaseBootstrap(){
       return;
     }
     window.FirebaseSync.pullLogs().then(function(remote){
-      if(!remote || !remote.data){ pushStoreSnapshot(); return; }
+      if(!remote || !remote.data){
+        if(remote && remote.leapAuto){ setLeapAuto(remote.leapAuto, true); renderAllScreens(); }
+        pushStoreSnapshot(); return;
+      }
       let remoteStore;
       try{ remoteStore = JSON.parse(remote.data); }catch(e){ return; }
       const remoteTs = remote.clientUpdatedAt || 0;
@@ -2186,10 +2224,22 @@ function initFirebaseBootstrap(){
         store = remoteStore;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
         activeDate = todaySystemKey();
-        renderAllScreens();
       } else if(localTs > remoteTs){
         pushStoreSnapshot();
       }
+      // LEAPの自動記録は store とは別フィールド。どちらのstoreを採用しても毎回読み直す
+      setLeapAuto(remote.leapAuto, true);
+      renderAllScreens();
+    });
+    // 画面に戻ってきたときに、LEAPの自動記録だけ読み直す（store は触らない）
+    document.addEventListener("visibilitychange", function(){
+      if(document.visibilityState !== "visible" || watchMode) return;
+      window.FirebaseSync.pullLogs().then(function(r){
+        if(!r) return;
+        const before = JSON.stringify(leapAuto);
+        setLeapAuto(r.leapAuto, true);
+        if(JSON.stringify(leapAuto) !== before) renderAllScreens();
+      });
     });
   });
   window.addEventListener("firebaseAuthChanged", function(){ location.reload(); });
