@@ -33,7 +33,7 @@ function makeContext(store, leapAuto, today){
   var ctx = {
     document: { getElementById: function(id){ return els[id] || null; } },
     Math: Math, JSON: JSON, DQLeapAuto: L,
-    store: store, leapAuto: leapAuto, activeDate: today, watchMode: false,
+    store: store, leapAuto: leapAuto, eikomiAuto: {}, kyotsuMathAuto: {}, activeDate: today, watchMode: false,
     dayData: function(k){ return ctx.store.days[k] || { events: [], eventDone: {}, quests: [] }; },
     todaySystemKey: function(){ return today; },
     parseKey: function(k){ var a = k.split("-"); return new Date(+a[0], +a[1] - 1, +a[2]); },
@@ -44,6 +44,8 @@ function makeContext(store, leapAuto, today){
   };
   ctx.dispItems = function(k){ return L.displayItems(ctx.dayData(k).quests, ctx.leapAuto, k); };
   ctx.setLeapAuto = function(raw){ ctx.leapAuto = L.normalizeLeapAuto(raw); };
+  ctx.setEikomiAuto = function(raw){ ctx.eikomiAuto = L.sources.eikomi.normalize(raw); };
+  ctx.setKyotsuMathAuto = function(raw){ ctx.kyotsuMathAuto = L.sources.kyotsuMath.normalize(raw); };
   vm.createContext(ctx);
   vm.runInContext(extractFunction("renderResults"), ctx);
   return ctx;

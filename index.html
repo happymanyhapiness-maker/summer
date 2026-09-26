@@ -940,13 +940,24 @@ function pushStoreSnapshot(){
 
 function dayData(key){ return store.days[key] || defaultDay(); }
 
-/* ===== LEAP単語帳の自動記録（dq-leap-auto.js） =====
-   leapAuto は LEAP 側だけが書く別フィールド（dailyquest-logs/{uid}.leapAuto）。この画面では読むだけで、store には入れない。
-   表示・集計は dispQuests / dispItems で通常クエストと合成する（同じ日に以前の手動反映 autoSource:"leap" があれば表示から外す）。 */
+/* ===== 各学習アプリの自動記録（dq-leap-auto.js） =====
+   leapAuto/eikomiAuto/kyotsuMathAuto はそれぞれのアプリ側だけが書く別フィールド
+   （dailyquest-logs/{uid}.leapAuto / .eikomiAuto / .kyotsuMathAuto）。この画面では読むだけで、store には入れない。
+   表示・集計は dispQuests / dispItems で通常クエストと合成する（同じ日に以前の手動反映 autoSource:"leap"|"eikomi"|"kyotsu-math" があれば表示から外す）。 */
 const LEAP_AUTO_CACHE_KEY = "dailyquest_leap_auto_v1";
+const EIKOMI_AUTO_CACHE_KEY = "dailyquest_eikomi_auto_v1";
+const KYOTSU_MATH_AUTO_CACHE_KEY = "dailyquest_kyotsu_math_auto_v1";
 let leapAuto = {};
+let eikomiAuto = {};
+let kyotsuMathAuto = {};
 function loadLeapAutoCache(){
   try{ return DQLeapAuto.normalizeLeapAuto(JSON.parse(localStorage.getItem(LEAP_AUTO_CACHE_KEY) || "{}")); }catch(e){ return {}; }
+}
+function loadEikomiAutoCache(){
+  try{ return DQLeapAuto.sources.eikomi.normalize(JSON.parse(localStorage.getItem(EIKOMI_AUTO_CACHE_KEY) || "{}")); }catch(e){ return {}; }
+}
+function loadKyotsuMathAutoCache(){
+  try{ return DQLeapAuto.sources.kyotsuMath.normalize(JSON.parse(localStorage.getItem(KYOTSU_MATH_AUTO_CACHE_KEY) || "{}")); }catch(e){ return {}; }
 }
 function setLeapAuto(raw, persistCache){
   leapAuto = DQLeapAuto.normalizeLeapAuto(raw);
@@ -958,11 +969,39 @@ function setLeapAuto(raw, persistCache){
     if(!watchMode) persist();
   }
 }
-function dispQuests(key){ return DQLeapAuto.displayQuests(dayData(key).quests, leapAuto, key); }
-function dispItems(key){ return DQLeapAuto.displayItems(dayData(key).quests, leapAuto, key); }
-function allDayKeys(){ return DQLeapAuto.allDayKeys(store.days, leapAuto); }
-// 起動直後はキャッシュ（前回読んだleapAuto）で表示し、記録開始日も合わせる。クラウドを読んだら最新に置き換える
+function setEikomiAuto(raw, persistCache){
+  eikomiAuto = DQLeapAuto.sources.eikomi.normalize(raw);
+  if(persistCache){ try{ localStorage.setItem(EIKOMI_AUTO_CACHE_KEY, JSON.stringify(eikomiAuto)); }catch(e){} }
+  const first = DQLeapAuto.sources.eikomi.earliestDate(eikomiAuto);
+  if(first && (!store.appStartDate || first < store.appStartDate)){
+    store.appStartDate = first;
+    if(!watchMode) persist();
+  }
+}
+function setKyotsuMathAuto(raw, persistCache){
+  kyotsuMathAuto = DQLeapAuto.sources.kyotsuMath.normalize(raw);
+  if(persistCache){ try{ localStorage.setItem(KYOTSU_MATH_AUTO_CACHE_KEY, JSON.stringify(kyotsuMathAuto)); }catch(e){} }
+  const first = DQLeapAuto.sources.kyotsuMath.earliestDate(kyotsuMathAuto);
+  if(first && (!store.appStartDate || first < store.appStartDate)){
+    store.appStartDate = first;
+    if(!watchMode) persist();
+  }
+}
+// leap/eikomi/kyotsu-mathの3ソースをその場で合成するだけのヘルパー。store／dataへは書き戻さない。
+function mergedAutoSources(){
+  return DQLeapAuto.mergeSources([
+    { def: DQLeapAuto.sources.leap, map: leapAuto },
+    { def: DQLeapAuto.sources.eikomi, map: eikomiAuto },
+    { def: DQLeapAuto.sources.kyotsuMath, map: kyotsuMathAuto }
+  ]);
+}
+function dispQuests(key){ return mergedAutoSources().displayQuests(dayData(key).quests, key); }
+function dispItems(key){ return mergedAutoSources().displayItems(dayData(key).quests, key); }
+function allDayKeys(){ return mergedAutoSources().allDayKeys(store.days); }
+// 起動直後はキャッシュ（前回読んだ各Auto）で表示し、記録開始日も合わせる。クラウドを読んだら最新に置き換える
 setLeapAuto(loadLeapAutoCache(), false);
+setEikomiAuto(loadEikomiAutoCache(), false);
+setKyotsuMathAuto(loadKyotsuMathAutoCache(), false);
 function ensureDay(key){ if(!store.days[key]) store.days[key] = defaultDay(); return store.days[key]; }
 function typeById(id){ return store.eventTypes.find(t=>t.id===id); }
 
@@ -1965,7 +2004,12 @@ function openWatchModal(){
     let cs;
     try{ cs = JSON.parse(remote.data); }catch(e){ el.innerHTML = "データの読み込みに失敗しました。"; return; }
     const today = todaySystemKey();
-    const q = DQLeapAuto.displayItems((cs.days && cs.days[today] && cs.days[today].quests) || [], DQLeapAuto.normalizeLeapAuto(remote.leapAuto), today);
+    const previewMerged = DQLeapAuto.mergeSources([
+      { def: DQLeapAuto.sources.leap, map: DQLeapAuto.sources.leap.normalize(remote.leapAuto) },
+      { def: DQLeapAuto.sources.eikomi, map: DQLeapAuto.sources.eikomi.normalize(remote.eikomiAuto) },
+      { def: DQLeapAuto.sources.kyotsuMath, map: DQLeapAuto.sources.kyotsuMath.normalize(remote.kyotsuMathAuto) }
+    ]);
+    const q = previewMerged.displayItems((cs.days && cs.days[today] && cs.days[today].quests) || [], today);
     const done = q.filter(x=>x.done).length;
     const total = q.length;
     let updatedLabel = "—";
@@ -2181,6 +2225,8 @@ function loadWatchData(){
     }
     store = cs;
     setLeapAuto(remote.leapAuto, false);
+    setEikomiAuto(remote.eikomiAuto, false);
+    setKyotsuMathAuto(remote.kyotsuMathAuto, false);
     activeDate = todaySystemKey();
     selectedRecordDate = activeDate;
     const d0 = parseKey(activeDate);
@@ -2217,7 +2263,12 @@ function initFirebaseBootstrap(){
     }
     window.FirebaseSync.pullLogs().then(function(remote){
       if(!remote || !remote.data){
-        if(remote && remote.leapAuto){ setLeapAuto(remote.leapAuto, true); renderAllScreens(); }
+        if(remote && (remote.leapAuto || remote.eikomiAuto || remote.kyotsuMathAuto)){
+          setLeapAuto(remote.leapAuto, true);
+          setEikomiAuto(remote.eikomiAuto, true);
+          setKyotsuMathAuto(remote.kyotsuMathAuto, true);
+          renderAllScreens();
+        }
         pushStoreSnapshot(); return;
       }
       let remoteStore;
@@ -2231,18 +2282,22 @@ function initFirebaseBootstrap(){
       } else if(localTs > remoteTs){
         pushStoreSnapshot();
       }
-      // LEAPの自動記録は store とは別フィールド。どちらのstoreを採用しても毎回読み直す
+      // 各アプリの自動記録は store とは別フィールド。どちらのstoreを採用しても毎回読み直す
       setLeapAuto(remote.leapAuto, true);
+      setEikomiAuto(remote.eikomiAuto, true);
+      setKyotsuMathAuto(remote.kyotsuMathAuto, true);
       renderAllScreens();
     });
-    // 画面に戻ってきたときに、LEAPの自動記録だけ読み直す（store は触らない）
+    // 画面に戻ってきたときに、各アプリの自動記録だけ読み直す（store は触らない）
     document.addEventListener("visibilitychange", function(){
       if(document.visibilityState !== "visible" || watchMode) return;
       window.FirebaseSync.pullLogs().then(function(r){
         if(!r) return;
-        const before = JSON.stringify(leapAuto);
+        const before = JSON.stringify([leapAuto, eikomiAuto, kyotsuMathAuto]);
         setLeapAuto(r.leapAuto, true);
-        if(JSON.stringify(leapAuto) !== before) renderAllScreens();
+        setEikomiAuto(r.eikomiAuto, true);
+        setKyotsuMathAuto(r.kyotsuMathAuto, true);
+        if(JSON.stringify([leapAuto, eikomiAuto, kyotsuMathAuto]) !== before) renderAllScreens();
       });
     });
   });
