@@ -124,7 +124,8 @@ function currentRole(){
 // （Firestoreセキュリティルール側で許可範囲を制御している）
 function pushLogs(data){
   var uid = currentUid();
-  if(!uid)return Promise.resolve();
+  // 書き込めるのは本人（child）だけ。それ以外のロールは何もしない（permission-deniedを出さない）
+  if(!uid || currentRole()!=="child")return Promise.resolve();
   var payload = {};
   for(var k in data){payload[k]=data[k];}
   payload.updatedAt = serverTimestamp();
@@ -134,6 +135,9 @@ function pushLogs(data){
 function pullLogs(uid){
   uid = uid || currentUid();
   if(!uid)return Promise.resolve(null);
+  // 読めるのは子のドキュメントを、本人（child）か保護者（admin）が読む場合だけ
+  var role = currentRole();
+  if(uid!==CHILD_UID || (role!=="child" && role!=="admin"))return Promise.resolve(null);
   return getDoc(doc(db,LOGS_COLLECTION,uid)).then(function(snap){
     return snap.exists() ? snap.data() : null;
   }).catch(function(){return null;});

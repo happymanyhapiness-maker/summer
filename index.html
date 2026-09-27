@@ -272,7 +272,7 @@
 <link rel="stylesheet" href="dq-theme.css">
 </head>
 <body>
-<script type="module" src="dq-firebase-sync.js?v=1"></script>
+<script type="module" src="dq-firebase-sync.js?v=2"></script>
 <script src="dq-leap-auto.js?v=1"></script>
 <template id="__bundler_thumbnail" data-bg-color="#111A24">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
@@ -927,14 +927,21 @@ function persist(){
   scheduleCloudSync();
 }
 
+// Plannerのクラウド同期（dailyquest-logs の読み書き）は本人（child）ログイン時だけ。
+// 保護者は見守りモード（読むだけ）、individual・家族外・未ログイン・ロール判定前はこの端末だけで使う。
+function isCloudSyncTarget(){
+  const fs = window.FirebaseSync;
+  return !!(fs && fs.currentUid() && fs.currentRole() === "child");
+}
+
 let _cloudSyncTimer = null;
 function scheduleCloudSync(){
-  if(!window.FirebaseSync || !window.FirebaseSync.currentUid()) return;
+  if(!isCloudSyncTarget()) return;
   if(_cloudSyncTimer) clearTimeout(_cloudSyncTimer);
   _cloudSyncTimer = setTimeout(()=>{ _cloudSyncTimer = null; pushStoreSnapshot(); }, 1500);
 }
 function pushStoreSnapshot(){
-  if(!window.FirebaseSync || !window.FirebaseSync.currentUid()) return Promise.resolve();
+  if(!isCloudSyncTarget()) return Promise.resolve();
   return window.FirebaseSync.pushLogs({ data: JSON.stringify(store), clientUpdatedAt: store._updatedAt||0 }).catch(()=>{});
 }
 
@@ -1980,7 +1987,7 @@ function renderAccountArea(){
     const role = fs.currentRole();
     el.innerHTML = `
       <div style="font-size:12.5px; color:var(--ink-900); font-weight:700; margin-bottom:2px;">${fs.currentEmail()||"ログイン中"}</div>
-      <div style="font-size:11px; color:var(--ink-300); margin-bottom:var(--sp-3);">ロール: ${ROLE_LABEL[role]||"不明"}${role==="admin" ? "・下の「見守り」タブから子供の記録を見られます" : "・記録は自動でクラウドに保存されています"}</div>
+      <div style="font-size:11px; color:var(--ink-300); margin-bottom:var(--sp-3);">ロール: ${ROLE_LABEL[role]||"不明"}${role==="admin" ? "・下の「見守り」タブから子供の記録を見られます" : role==="child" ? "・記録は自動でクラウドに保存されています" : "・記録はこの端末だけに保存されます（クラウド同期の対象外）"}</div>
       <button class="save-btn" id="fbLogoutBtn" style="background:transparent; color:var(--danger-500); border:1px solid var(--danger-500);">ログアウト</button>
     `;
     document.getElementById("fbLogoutBtn").addEventListener("click", ()=>{
@@ -2261,6 +2268,8 @@ function initFirebaseBootstrap(){
       enterWatchMode();
       return;
     }
+    // individual・家族外アカウントはクラウド同期しない（この端末のローカル保存だけで使う）
+    if(!isCloudSyncTarget()) return;
     window.FirebaseSync.pullLogs().then(function(remote){
       if(!remote || !remote.data){
         if(remote && (remote.leapAuto || remote.eikomiAuto || remote.kyotsuMathAuto)){
