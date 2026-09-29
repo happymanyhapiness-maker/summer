@@ -173,11 +173,12 @@
   // ===== アプリとの連携状況（見守りの概要に出す。表示専用で、何も書き込まない） =====
   // 各アプリが書いた自動記録（正規化済みのautoMap）から「最後に記録が届いた日・時刻」を、
   // アプリが同期のたびに更新している要約ドキュメントの updatedAt（heartbeats）から「最後に同期した時刻」を出す。
-  // LEAPには要約ドキュメントが無いので、最終同期は出さない（最終記録だけ）。
+  // LEAPには要約ドキュメントが無いので、LEAPアプリが同期のついでに dailyquest-logs/{子}.syncHeartbeat.leap（ms）へ書く
+  // 心拍を最終同期として使う（syncOptional：心拍が無い旧状態・未対応の間は、従来どおり最終記録だけを出す）。
   // 最終同期が STALE_MS 以上前のときだけ stale。「学習していない」場合も同じ見え方になるので、文言は断定しない。
   var LINK_STALE_MS = 72 * 3600 * 1000;
   var LINK_APPS = [
-    { key: "leap", label: "LEAP単語帳", hasSync: false },
+    { key: "leap", label: "LEAP単語帳", hasSync: true, syncOptional: true },
     { key: "eikomi", label: "英コミュ", hasSync: true },
     { key: "kyotsuMath", label: "数学", hasSync: true }
   ];
@@ -195,13 +196,14 @@
       });
       var hb = a.hasSync ? Number(heartbeats[a.key]) : 0;
       if(!(hb > 0)) hb = 0;   // 不明・不正（NaN・負数・null）は 0＝不明。警告もしない
+      var hasSync = a.hasSync && !(a.syncOptional && hb === 0);   // 任意の最終同期は、値があるときだけ出す
       return {
         key: a.key, label: a.label,
         lastRecordDate: keys.length ? keys[keys.length - 1] : "",
         lastRecordAt: lastRecordAt,
-        hasSync: a.hasSync,
+        hasSync: hasSync,
         lastSyncAt: hb,
-        stale: a.hasSync && hb > 0 && (nowMs - hb) >= LINK_STALE_MS
+        stale: hasSync && hb > 0 && (nowMs - hb) >= LINK_STALE_MS
       };
     });
   }

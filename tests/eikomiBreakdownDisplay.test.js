@@ -222,6 +222,6 @@ test("⑱見守り：子どものeikomiAutoは setEikomiAuto（＝normalize）�
   assert.match(watch, /setEikomiAuto\(remote\.eikomiAuto, false\)/);
   assert.match(extractFunction("setEikomiAuto"), /DQLeapAuto\.sources\.eikomi\.normalize\(raw\)/);
 });
-test("⑲cache bust：dq-leap-auto.js の version を上げている（v=6。値は leapAuto.test.js と揃える）", function(){
-  assert.match(html, /<script src="dq-leap-auto\.js\?v=6"><\/script>/);
+test("⑲cache bust：dq-leap-auto.js の version を上げている（v=7。値は leapAuto.test.js と揃える）", function(){
+  assert.match(html, /<script src="dq-leap-auto\.js\?v=7"><\/script>/);
 });

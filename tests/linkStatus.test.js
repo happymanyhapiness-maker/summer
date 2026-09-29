@@ -61,10 +61,17 @@ test("②記録がまだ無いアプリ・入力が空でも壊れない", funct
   var rows2 = L.summarizeLinks({ leap: null, eikomi: {}, kyotsuMath: undefined }, { eikomi: null }, NOW);
   assert.equal(rows2.length, 3);
 });
-test("③最終同期は英コミュ・数学だけ（LEAPには無い）。ハートビートが無い・不正なら 0（不明）で、警告は出さない", function(){
-  var rows = L.summarizeLinks(maps(), { eikomi: NOW - H, kyotsuMath: null, leap: NOW - 1 }, NOW);
-  assert.equal(rowOf(rows, "leap").hasSync, false);
-  assert.equal(rowOf(rows, "leap").lastSyncAt, 0, "LEAPのハートビートは見ない");
+test("③最終同期：英コミュ・数学は常に出す（不明なら 0＝不明）。LEAPは心拍があるときだけ（無ければ従来どおり最終記録のみ）。不正な値は 0 で、警告は出さない", function(){
+  var rows = L.summarizeLinks(maps(), { eikomi: NOW - H, kyotsuMath: null }, NOW);
+  assert.equal(rowOf(rows, "leap").hasSync, false, "LEAPの心拍が無い旧状態は最終記録のみ");
+  assert.equal(rowOf(rows, "leap").lastSyncAt, 0);
+  assert.equal(rowOf(rows, "leap").stale, false);
+  var withHb = L.summarizeLinks(maps(), { leap: NOW - 2 * H }, NOW);
+  assert.equal(rowOf(withHb, "leap").hasSync, true, "心拍があれば最終同期を出す");
+  assert.equal(rowOf(withHb, "leap").lastSyncAt, NOW - 2 * H);
+  ["x", -5, 0, NaN, null, undefined].forEach(function(v){
+    assert.equal(rowOf(L.summarizeLinks(maps(), { leap: v }, NOW), "leap").hasSync, false, "不正な心拍は無いものとして扱う: " + String(v));
+  });
   assert.equal(rowOf(rows, "eikomi").lastSyncAt, NOW - H);
   assert.equal(rowOf(rows, "kyotsuMath").hasSync, true);
   assert.equal(rowOf(rows, "kyotsuMath").lastSyncAt, 0);
@@ -73,14 +80,17 @@ test("③最終同期は英コミュ・数学だけ（LEAPには無い）。ハ�
   assert.equal(rowOf(bad, "eikomi").lastSyncAt, 0);
   assert.equal(rowOf(bad, "kyotsuMath").lastSyncAt, 0);
 });
-test("④警告（stale）は最終同期が72時間以上前の英コミュ・数学だけ。ちょうど72時間は警告、71時間59分は警告なし", function(){
+test("④警告（stale）は最終同期が72時間以上前のアプリ（英コミュ・数学・心拍のあるLEAP）だけ。ちょうど72時間は警告、71時間59分は警告なし", function(){
   assert.equal(L.LINK_STALE_MS, 72 * H);
-  var rows = L.summarizeLinks(maps(), { eikomi: NOW - 72 * H, kyotsuMath: NOW - 72 * H + 60000 }, NOW);
+  var rows = L.summarizeLinks(maps(), { eikomi: NOW - 72 * H, kyotsuMath: NOW - 72 * H + 60000, leap: NOW - 72 * H }, NOW);
   assert.equal(rowOf(rows, "eikomi").stale, true);
   assert.equal(rowOf(rows, "kyotsuMath").stale, false);
-  // LEAPは最終記録が何日前でも警告しない（学習していないだけかもしれない）
+  assert.equal(rowOf(rows, "leap").stale, true, "LEAPも同じ72時間");
+  assert.equal(rowOf(L.summarizeLinks(maps(), { leap: NOW - 72 * H + 60000 }, NOW), "leap").stale, false);
+  // LEAPの最終「記録」が何日前でも、心拍が無いか新しければ警告しない（学習していないだけかもしれない）
   var old = L.summarizeLinks(maps({ leap: { "2026-06-29": { count: 1, updatedAt: 1 } } }), {}, NOW);
   assert.equal(rowOf(old, "leap").stale, false);
+  assert.equal(rowOf(L.summarizeLinks(maps({ leap: { "2026-06-29": { count: 1, updatedAt: 1 } } }), { leap: NOW - H }, NOW), "leap").stale, false);
   // 記録が古くても、同期が最近なら警告しない（アプリは動いている）
   var fresh = L.summarizeLinks(maps({ eikomi: { "2026-09-01": { count: 1, updatedAt: 1 } } }), { eikomi: NOW - H }, NOW);
   assert.equal(rowOf(fresh, "eikomi").stale, false);
@@ -139,12 +149,16 @@ test("⑦記録もハートビートも無い → 「記録はまだありませ
   assert.equal((s.el.innerHTML.match(/最終同期 不明/g) || []).length, 2, "英コミュ・数学だけ");
   assert.ok(!/同期の記録がありません/.test(s.el.innerHTML));
 });
-test("⑧72時間以上同期が無いアプリだけ黄色＋文言（断定しない）。LEAPは対象外", function(){
+test("⑧72時間以上同期が無いアプリだけ黄色＋文言（断定しない）。LEAPは心拍があるときだけ対象", function(){
   var s = makeScreen({ maps: REC, heartbeats: { eikomi: NOW - 80 * H, kyotsuMath: NOW - H } });
   vm.runInContext("renderLinkStatus()", s);
   var out = s.el.innerHTML;
   assert.match(out, /英コミュ：3日以上、同期の記録がありません（学習していない場合は問題ありません）/);
-  assert.ok(!/数学：3日以上/.test(out) && !/LEAP単語帳：3日以上/.test(out));
+  assert.ok(!/数学：3日以上/.test(out) && !/LEAP単語帳：3日以上/.test(out), "LEAPは心拍が無いので警告しない");
+  var l = makeScreen({ maps: REC, heartbeats: { leap: NOW - 100 * H, eikomi: NOW - H, kyotsuMath: NOW - H } });
+  vm.runInContext("renderLinkStatus()", l);
+  assert.match(l.el.innerHTML, /LEAP単語帳：3日以上、同期の記録がありません（学習していない場合は問題ありません）/);
+  assert.match(l.el.innerHTML, /LEAP単語帳<\/b>[\s\S]*最終同期 \d+\/\d+ \d\d:\d\d（4日前）<br>最終記録/, "LEAPの行に最終同期が出る");
   var s2 = makeScreen({ maps: REC, heartbeats: { eikomi: NOW - 80 * H, kyotsuMath: NOW - 90 * H } });
   vm.runInContext("renderLinkStatus()", s2);
   assert.match(s2.el.innerHTML, /英コミュ・数学：3日以上、同期の記録がありません/);
@@ -175,10 +189,51 @@ test("⑨要約ドキュメントを読む：updatedAt をハートビートに�
 test("⑩見守り（保護者）だけに出る／読み込みは loadWatchData から。表示専用で保存しない", function(){
   assert.match(html, /#linkStatusCard\{ display:none; \}\n\s*body\.role-admin #linkStatusCard\{ display:block; \}/);
   var watch = extractFunction("loadWatchData");
-  assert.match(watch, /renderProgressCard\(\);\n    renderLinkStatus\(\);\n    loadLinkHeartbeats\(\);/);
+  assert.match(watch, /renderProgressCard\(\);[\s\S]*?linkHeartbeats = Object\.assign\(\{\}, linkHeartbeats, \{ leap: remote\.syncHeartbeat && remote\.syncHeartbeat\.leap \}\);\n    renderLinkStatus\(\);\n    loadLinkHeartbeats\(\);/);
   var body = extractFunction("renderLinkStatus") + extractFunction("loadLinkHeartbeats");
   assert.ok(!/persist\(|setDoc|pushLogs|localStorage/.test(body), "何も書き込まない");
 });
-test("⑪cache bust：dq-leap-auto.js の version（v=6）", function(){
-  assert.match(html, /<script src="dq-leap-auto\.js\?v=6"><\/script>/);
+test("⑫LEAPの心拍は、読み込んだ子どものドキュメントの syncHeartbeat.leap から。英コミュ・数学の読み込みでも消えない", async function(){
+  // loadWatchData：remote.syncHeartbeat.leap が linkHeartbeats に入り、renderLinkStatus が呼ばれる
+  var calls = [];
+  var ctx = {
+    document: { getElementById: function(){ return { textContent: "", innerHTML: "", style: {}, className: "", setAttribute: function(){} }; } },
+    Math: Math, JSON: JSON, Object: Object, DQLeapAuto: L, store: {}, leapAuto: {}, eikomiAuto: {}, kyotsuMathAuto: {}, activeDate: "", watchMode: true,
+    parseKey: function(k){ var a = k.split("-"); return new Date(+a[0], +a[1] - 1, +a[2]); }, todaySystemKey: function(){ return "2026-09-29"; },
+    setLeapAuto: function(){}, setEikomiAuto: function(){}, setKyotsuMathAuto: function(){}, renderRecords: function(){}, renderResults: function(){}, renderProgressCard: function(){},
+    renderLinkStatus: function(){ calls.push("render:" + JSON.stringify(ctx.linkHeartbeats)); }, loadLinkHeartbeats: function(){ calls.push("load"); }
+  };
+  ctx.window = { FirebaseSync: { CHILD_UID: "c", pullLogs: function(){ return Promise.resolve({ data: '{"days":{}}', syncHeartbeat: { leap: 12345 }, updatedAt: null }); } } };
+  vm.createContext(ctx);
+  vm.runInContext("var calView,heatmapView,selectedRecordDate,store,linkHeartbeats = { eikomi: 7 };", ctx);
+  vm.runInContext(extractFunction("loadWatchData"), ctx);
+  await vm.runInContext("loadWatchData()", ctx);
+  await new Promise(function(r){ setImmediate(r); });
+  assert.deepEqual(calls, ['render:{"eikomi":7,"leap":12345}', "load"], "LEAPの心拍を足して描画。既にあった値は残る");
+  // 心拍が無い旧状態：leap は undefined（表示側で無視される）
+  ctx.window.FirebaseSync.pullLogs = function(){ return Promise.resolve({ data: '{"days":{}}', updatedAt: null }); };
+  calls.length = 0; vm.runInContext("linkHeartbeats = {}", ctx);
+  await vm.runInContext("loadWatchData()", ctx);
+  await new Promise(function(r){ setImmediate(r); });
+  assert.equal(ctx.linkHeartbeats.leap, undefined);
+
+  // loadLinkHeartbeats：英コミュ・数学を入れても LEAP の値は残る
+  var s = makeScreen({ maps: REC, heartbeats: { leap: NOW - H }, sync: {
+    pullEikomiSummary: function(){ return Promise.resolve({ updatedAt: NOW - 2 * H }); },
+    pullKyotsuMathSummary: function(){ return Promise.resolve({ updatedAt: NOW - 3 * H }); }
+  } });
+  await vm.runInContext("loadLinkHeartbeats()", s);
+  var rowsHtml = s.el.innerHTML.split("<b ").slice(1);   // アプリごとの行
+  assert.equal(rowsHtml.length, 3);
+  rowsHtml.forEach(function(row, i){ assert.match(row, /最終同期 \d+\/\d+ \d\d:\d\d/, ["LEAP", "英コミュ", "数学"][i] + " の行に最終同期が出る"); });
+});
+test("⑬Plannerは syncHeartbeat を書かない（各アプリだけが書く別フィールド）。保存の書き込みは data と clientUpdatedAt だけ", function(){
+  assert.match(html, /pushLogs\(\{ data: JSON\.stringify\(store\), clientUpdatedAt: store\._updatedAt\|\|0 \}\)/);
+  var sync = fs.readFileSync(path.join(__dirname, "..", "dq-firebase-sync.js"), "utf8");
+  assert.ok(!/syncHeartbeat/.test(sync), "dq-firebase-sync.js は心拍に触れない");
+  var htmlWithoutReads = html.replace(/remote\.syncHeartbeat/g, "").replace(/syncHeartbeat\.leap/g, "");
+  assert.ok(!/syncHeartbeat/.test(htmlWithoutReads), "index.html は読むだけ");
+});
+test("⑪cache bust：dq-leap-auto.js の version（v=7）", function(){
+  assert.match(html, /<script src="dq-leap-auto\.js\?v=7"><\/script>/);
 });
