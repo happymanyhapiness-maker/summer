@@ -155,7 +155,61 @@
     };
   }
 
+  // ===== アプリとの連携状況（見守りの概要に出す。表示専用で、何も書き込まない） =====
+  // 各アプリが書いた自動記録（正規化済みのautoMap）から「最後に記録が届いた日・時刻」を、
+  // アプリが同期のたびに更新している要約ドキュメントの updatedAt（heartbeats）から「最後に同期した時刻」を出す。
+  // LEAPには要約ドキュメントが無いので、最終同期は出さない（最終記録だけ）。
+  // 最終同期が STALE_MS 以上前のときだけ stale。「学習していない」場合も同じ見え方になるので、文言は断定しない。
+  var LINK_STALE_MS = 72 * 3600 * 1000;
+  var LINK_APPS = [
+    { key: "leap", label: "LEAP単語帳", hasSync: false },
+    { key: "eikomi", label: "英コミュ", hasSync: true },
+    { key: "kyotsuMath", label: "数学", hasSync: true }
+  ];
+  // maps: { leap, eikomi, kyotsuMath }（各normalize済み）／heartbeats: { eikomi, kyotsuMath }（ms。無い・不明は 0/null）
+  function summarizeLinks(maps, heartbeats, nowMs){
+    maps = maps || {};
+    heartbeats = heartbeats || {};
+    return LINK_APPS.map(function(a){
+      var map = maps[a.key] || {};
+      var keys = Object.keys(map).sort();
+      var lastRecordAt = 0;
+      keys.forEach(function(k){
+        var t = Number(map[k] && map[k].updatedAt) || 0;
+        if(t > lastRecordAt) lastRecordAt = t;
+      });
+      var hb = a.hasSync ? Number(heartbeats[a.key]) : 0;
+      if(!(hb > 0)) hb = 0;   // 不明・不正（NaN・負数・null）は 0＝不明。警告もしない
+      return {
+        key: a.key, label: a.label,
+        lastRecordDate: keys.length ? keys[keys.length - 1] : "",
+        lastRecordAt: lastRecordAt,
+        hasSync: a.hasSync,
+        lastSyncAt: hb,
+        stale: a.hasSync && hb > 0 && (nowMs - hb) >= LINK_STALE_MS
+      };
+    });
+  }
+  // 「9/29 22:04（3時間前）」。日時はJST固定（家族は日本で使う）。未来（端末の時計ずれ）は「たった今」
+  function linkTimeText(ts, nowMs){
+    ts = Number(ts);
+    if(!(ts > 0)) return "";
+    var d = new Date(ts + 9 * 3600 * 1000);
+    function p2(n){ return (n < 10 ? "0" : "") + n; }
+    var abs = (d.getUTCMonth() + 1) + "/" + d.getUTCDate() + " " + p2(d.getUTCHours()) + ":" + p2(d.getUTCMinutes());
+    var diff = nowMs - ts, rel;
+    if(diff < 60000) rel = "たった今";
+    else if(diff < 3600000) rel = Math.floor(diff / 60000) + "分前";
+    else if(diff < 86400000) rel = Math.floor(diff / 3600000) + "時間前";
+    else rel = Math.floor(diff / 86400000) + "日前";
+    return abs + "（" + rel + "）";
+  }
+
   var api = {
+    // ---- アプリとの連携状況 ----
+    LINK_STALE_MS: LINK_STALE_MS,
+    summarizeLinks: summarizeLinks,
+    linkTimeText: linkTimeText,
     // ---- 既存API（leap専用・そのまま後方互換） ----
     LABEL: leapSource.label,
     TAG: leapSource.tag,

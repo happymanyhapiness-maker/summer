@@ -40,6 +40,8 @@ function makeContext(store, leapAuto, today){
     renderRecords: function(){ calls.push("renderRecords"); },
     renderProgressCard: function(){ calls.push("renderProgressCard"); },
     persist: function(){ calls.push("persist"); },
+    // 連携状況カード（見守りの概要）。このテストの対象外なのでスタブ（未定義だと loadWatchData が ReferenceError を握りつぶして通ってしまうため）
+    renderLinkStatus: function(){}, loadLinkHeartbeats: function(){},
     calls: calls, els: els
   };
   ctx.dispItems = function(k){ return L.displayItems(ctx.dayData(k).quests, ctx.leapAuto, k); };

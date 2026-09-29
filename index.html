@@ -68,6 +68,8 @@
   body.role-admin .nav-item[data-screen="calendar"]{ display:none; }
   #watchSyncBar{ display:none; }
   body.role-admin #watchSyncBar{ display:flex; }
+  #linkStatusCard{ display:none; }
+  body.role-admin #linkStatusCard{ display:block; }
   body.role-admin .settings-tab-btn[data-group="items"]{ display:none; }
   body.role-admin .record-quest-row{ cursor:default !important; }
 
@@ -273,7 +275,7 @@
 </head>
 <body>
 <script type="module" src="dq-firebase-sync.js?v=3"></script>
-<script src="dq-leap-auto.js?v=4"></script>
+<script src="dq-leap-auto.js?v=5"></script>
 <template id="__bundler_thumbnail" data-bg-color="#111A24">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="800" fill="#111A24"/>
@@ -410,6 +412,12 @@
         <div class="results-headline" style="margin-top:var(--sp-4);">
           <div class="rh-left"><b id="resultHeadline">0 / 0</b><span>クエスト完了</span></div>
         </div>
+      </section>
+
+      <section class="card" id="linkStatusCard">
+        <div class="card-title"><svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>アプリとの連携</div>
+        <div id="linkStatusList" style="font-size:12.5px;"></div>
+        <div style="font-size:10.5px; color:var(--ink-300); margin-top:8px; line-height:1.6;">最終記録＝デイリークエストに学習が届いた最後の時刻。最終同期＝アプリが最後にクラウドと同期した時刻。</div>
       </section>
 
       <section class="card">
@@ -2217,6 +2225,42 @@ function enterWatchMode(){
   if(refreshBtn) refreshBtn.addEventListener("click", loadWatchData);
 }
 
+/* ===== アプリとの連携状況（見守りの概要。表示専用で何も書かない） =====
+   最終記録：leapAuto/eikomiAuto/kyotsuMathAuto の最新の日付と updatedAt（学習がデイリークエストに届いた最後）。
+   最終同期：英コミュ・数学が同期のたびに更新している要約ドキュメントの updatedAt（LEAPには無いので出さない）。 */
+let linkHeartbeats = {};
+function renderLinkStatus(){
+  const el = document.getElementById("linkStatusList");
+  if(!el) return;
+  const nowMs = Date.now();
+  const rows = DQLeapAuto.summarizeLinks({ leap: leapAuto, eikomi: eikomiAuto, kyotsuMath: kyotsuMathAuto }, linkHeartbeats, nowMs);
+  const staleNames = [];
+  const html = rows.map(r=>{
+    const parts = [];
+    if(r.hasSync) parts.push(r.lastSyncAt ? `最終同期 ${DQLeapAuto.linkTimeText(r.lastSyncAt, nowMs)}` : "最終同期 不明");
+    if(r.lastRecordAt) parts.push(`最終記録 ${DQLeapAuto.linkTimeText(r.lastRecordAt, nowMs)}`);
+    else if(r.lastRecordDate) parts.push(`最終記録 ${r.lastRecordDate}`);
+    else parts.push("記録はまだありません");
+    if(r.stale) staleNames.push(r.label);
+    return `<div style="display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line);">
+      <b style="white-space:nowrap; color:${r.stale ? "#B7791F" : "var(--ink-900)"};">${r.label}</b>
+      <span style="text-align:right; color:var(--ink-500); line-height:1.5;">${parts.join("<br>")}</span>
+    </div>`;
+  }).join("");
+  const warn = staleNames.length
+    ? `<div style="margin-top:8px; font-size:11.5px; color:#B7791F; font-weight:600; line-height:1.6;">${staleNames.join("・")}：3日以上、同期の記録がありません（学習していない場合は問題ありません）</div>`
+    : "";
+  el.innerHTML = html + warn;
+}
+function loadLinkHeartbeats(){
+  const fs = window.FirebaseSync;
+  if(!fs || !fs.pullEikomiSummary || !fs.pullKyotsuMathSummary) return Promise.resolve();
+  return Promise.all([fs.pullEikomiSummary(), fs.pullKyotsuMathSummary()]).then(function(r){
+    linkHeartbeats = { eikomi: r[0] && r[0].updatedAt, kyotsuMath: r[1] && r[1].updatedAt };
+    renderLinkStatus();
+  }).catch(function(){ /* 取れなくても最終記録は出ているので何もしない */ });
+}
+
 function loadWatchData(){
   const note = document.getElementById("watchSyncNote");
   if(note) note.textContent = "読み込み中…";
@@ -2244,6 +2288,8 @@ function loadWatchData(){
     // 子どものデータ（＋LEAP自動記録）を読み込んだ後にここで描き直す（見守りではホーム描画全体は呼ばない）
     renderResults();
     renderProgressCard();
+    renderLinkStatus();
+    loadLinkHeartbeats();
     if(note){
       let updatedLabel = "-";
       try{ if(remote.updatedAt && remote.updatedAt.toDate) updatedLabel = remote.updatedAt.toDate().toLocaleString("ja-JP"); }catch(e){}
