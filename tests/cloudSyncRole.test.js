@@ -228,5 +228,5 @@ test("モジュール単体：child以外は pushLogs / 自uidの pullLogs がFi
 });
 
 test("cache bust：dq-firebase-sync.js の version を上げている", function(){
-  assert.match(html, /<script type="module" src="dq-firebase-sync\.js\?v=2"><\/script>/);
+  assert.match(html, /<script type="module" src="dq-firebase-sync\.js\?v=3"><\/script>/);
 });
