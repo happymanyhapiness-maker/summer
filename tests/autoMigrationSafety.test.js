@@ -63,7 +63,7 @@ test("①eikomi：旧autoSource(3件相当)＋新eikomiAuto(count:8)が同日 �
   vm.runInContext("setEikomiAuto({ '2026-09-26': { count: 8, updatedAt: 100 } }, false);", ctx);
   const items = vm.runInContext("dispItems('2026-09-26')", ctx);
 
-  assert.deepEqual(items.map(x => x.label), ["手動クエスト", "英コミュ（自動記録） 8問"], "表示は新Auto(8問)が正本になり、旧(3問)は出ない");
+  assert.deepEqual(items.map(x => x.label), ["手動クエスト", "英コミュ（自動記録） 8件"], "表示は新Auto(8問)が正本になり、旧(3問)は出ない");
   assert.equal(items.filter(x => /英コミュ/.test(x.label)).length, 1, "英コミュ関連の表示は1件だけ（二重表示なし）");
 
   // data自体（store.days）は削除・変更されていないこと

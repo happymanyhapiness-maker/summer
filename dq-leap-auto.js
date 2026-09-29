@@ -14,7 +14,9 @@
   var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
   // 1ソース分の正規化・表示合成ロジックをまとめて作る（leap/eikomi/kyotsu-math で共通処理を使い回す）。
-  function makeAutoSource(sourceKey, label, tag){
+  // unit は表示ラベルの単位（既定「問」）。英コミュは問題演習と音読の合算なので「件」。
+  function makeAutoSource(sourceKey, label, tag, unit){
+    unit = unit || "問";
     function normalize(raw){
       var out = {};
       if(!raw || typeof raw !== "object") return out;
@@ -29,7 +31,7 @@
     }
     function isLegacyQuest(q){ return !!(q && q.autoSource === sourceKey); }
     function autoQuest(entry){
-      return { label: label + " " + entry.count + "問", done: true, tag: tag, autoSource: sourceKey, auto: true };
+      return { label: label + " " + entry.count + unit, done: true, tag: tag, autoSource: sourceKey, auto: true };
     }
     // 表示・集計用のクエスト一覧：[{item, idx, auto}]。idxは store の quests 配列の添字（自動記録は -1）
     function displayQuests(quests, autoMap, key){
@@ -69,7 +71,7 @@
   }
 
   var leapSource = makeAutoSource("leap", "LEAP単語帳（自動記録）", "英語");
-  var eikomiSource = makeAutoSource("eikomi", "英コミュ（自動記録）", "英語");
+  var eikomiSource = makeAutoSource("eikomi", "英コミュ（自動記録）", "英語", "件");
   var kyotsuMathSource = makeAutoSource("kyotsu-math", "kyotsu-math（自動記録）", "数学");
 
   // 複数ソース（leap/eikomi/kyotsu-math）を1画面分まとめて合成するための小さなヘルパー。

@@ -44,7 +44,7 @@ test("③eikomiAutoのみ → 正しく表示される", function(){
   const eikomi = L.sources.eikomi.normalize({ "2026-09-24": { count: 12, updatedAt: 1 } });
   const m = merge({}, eikomi, {});
   const list = m.displayItems([{ label: "音読", done: true }], "2026-09-24");
-  assert.deepEqual(list.map(x => x.label), ["音読", "英コミュ（自動記録） 12問"]);
+  assert.deepEqual(list.map(x => x.label), ["音読", "英コミュ（自動記録） 12件"]);
   assert.equal(list[1].done, true);
   assert.equal(list[1].tag, "英語");
 });
@@ -68,7 +68,7 @@ test("⑤leap/eikomi/kyotsuMathすべて存在 → 3件とも表示される", f
   assert.deepEqual(list.map(x => x.label), [
     "手動",
     "LEAP単語帳（自動記録） 55問",
-    "英コミュ（自動記録） 12問",
+    "英コミュ（自動記録） 12件",
     "kyotsu-math（自動記録） 8問"
   ]);
   assert.deepEqual(list.slice(1).map(x => x.auto), [true, true, true]);
@@ -83,7 +83,7 @@ test("⑥旧autoSource:\"eikomi\"と新eikomiAutoが同日 → 二重表示し�
   ];
   const m = merge({}, eikomi, {});
   const list = m.displayItems(quests, "2026-09-24");
-  assert.deepEqual(list.map(x => x.label), ["音読", "英コミュ（自動記録） 20問"]);
+  assert.deepEqual(list.map(x => x.label), ["音読", "英コミュ（自動記録） 20件"]);
   assert.equal(quests.length, 2, "storeの配列自体は変更しない");
   // eikomiAutoが無い日は、旧記録をそのまま表示（過去記録を失わない）
   assert.deepEqual(
@@ -115,7 +115,7 @@ test("⑥⑦b 別sourceの旧記録は、他sourceのAutoフィールドの有�
   const list = m.displayItems(quests, "2026-09-24");
   assert.deepEqual(list.map(x => x.label), [
     "kyotsu-math（自動記録）（本日25問）", // 旧kyotsu-math記録は残る（kyotsuMathAutoが無いため）
-    "英コミュ（自動記録） 5問"
+    "英コミュ（自動記録） 5件"
   ]);
 });
 
@@ -148,4 +148,39 @@ test("画面：起動時・見守り・可視化復帰のいずれでもeikomiAu
   assert.match(html, /setKyotsuMathAuto\(remote\.kyotsuMathAuto, true\);/, "起動時に読み込む");
   assert.match(html, /setEikomiAuto\(r\.eikomiAuto, true\);/, "画面復帰時に読み直す");
   assert.match(html, /setKyotsuMathAuto\(r\.kyotsuMathAuto, true\);/, "画面復帰時に読み直す");
+});
+
+// ---- 単位：英コミュだけ「件」（問題演習＋音読の合算）。LEAP・kyotsu-mathは「問」のまま ----
+test("⑧表示単位：英コミュは「件」、LEAP・kyotsu-mathは「問」、makeAutoSourceの既定は「問」", function(){
+  const key = "2026-09-28";
+  const leap = L.sources.leap.normalize({ [key]: { count: 3, updatedAt: 1 } });
+  const eikomi = L.sources.eikomi.normalize({ [key]: { count: 3, updatedAt: 1 } });
+  const kyotsuMath = L.sources.kyotsuMath.normalize({ [key]: { count: 3, updatedAt: 1 } });
+  const labels = merge(leap, eikomi, kyotsuMath).displayItems([], key).map(x => x.label);
+  assert.deepEqual(labels, [
+    "LEAP単語帳（自動記録） 3問",
+    "英コミュ（自動記録） 3件",
+    "kyotsu-math（自動記録） 3問"
+  ]);
+  const custom = L.makeAutoSource("x", "X", "英語");
+  assert.equal(custom.autoQuest({ count: 2 }).label, "X 2問", "unit省略時は従来どおり「問」");
+});
+
+// ---- 英コミュ側が書く新形式（breakdown付き）でも、count がそのまま表示される ----
+test("⑨eikomiAutoの新形式（count＋breakdown:{q,listen}）：countで表示され、breakdownは表示・集計に影響しない", function(){
+  const raw = { "2026-09-28": { date: "2026-09-28", source: "eikomi", count: 1, breakdown: { q: 0, listen: 1 }, updatedAt: 1790000000000 } };
+  const eikomi = L.sources.eikomi.normalize(raw);
+  assert.deepEqual(eikomi["2026-09-28"], { date: "2026-09-28", source: "eikomi", count: 1, updatedAt: 1790000000000 });
+  const list = merge({}, eikomi, {}).displayQuests([], "2026-09-28");
+  assert.deepEqual(list.map(x => x.item.label), ["英コミュ（自動記録） 1件"]);
+  assert.equal(list[0].item.done, true);
+  assert.equal(list[0].auto, true);
+});
+
+// ---- 手動で同じ内容を入れると別項目として並ぶ（重複排除はしない）：9/28分は手動追加せずbackfillに任せる運用の根拠 ----
+test("⑩手動クエスト（autoSourceなし）は自動記録と別項目で並ぶ＝二重に数えられる", function(){
+  const eikomi = L.sources.eikomi.normalize({ "2026-09-28": { count: 1, updatedAt: 1 } });
+  const items = merge({}, eikomi, {}).displayItems([{ label: "英コミュ 音読", done: true, tag: "英語" }], "2026-09-28");
+  assert.deepEqual(items.map(x => x.label), ["英コミュ 音読", "英コミュ（自動記録） 1件"]);
+  assert.equal(items.filter(x => x.done).length, 2);
 });
