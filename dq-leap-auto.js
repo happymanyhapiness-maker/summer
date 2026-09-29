@@ -14,9 +14,29 @@
   var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
   // 1ソース分の正規化・表示合成ロジックをまとめて作る（leap/eikomi/kyotsu-math で共通処理を使い回す）。
+  function escHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){ return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; });
+  }
+
   // unit は表示ラベルの単位（既定「問」）。英コミュは問題演習と音読の合算なので「件」。
-  function makeAutoSource(sourceKey, label, tag, unit){
+  // detail（省略可）は内訳の表示定義：{ parts: [{ key, icon, title, word }, ...] }。
+  //   各アプリが書く breakdown:{key:件数,...} のうち、0でない項目だけを「icon+件数」で並べる（例：3件 📝2 🎤1）。
+  //   breakdown が無い・壊れている・合計が count と合わないときは、内訳を出さず「◯件」だけ（従来どおり）。
+  //   内訳は表示用にその場で作るだけで、store／data には保存しない。クエストの数・達成数にも影響しない（項目は1つのまま）。
+  function makeAutoSource(sourceKey, label, tag, unit, detail){
     unit = unit || "問";
+    // 有効な内訳だけを返す（それ以外は null）。detail の全項目が 0以上の整数で、合計が count と一致するときだけ有効
+    function cleanBreakdown(b, count){
+      if(!detail || !b || typeof b !== "object") return null;
+      var out = {}, sum = 0;
+      for(var i = 0; i < detail.parts.length; i++){
+        var v = b[detail.parts[i].key];
+        if(typeof v !== "number" || !isFinite(v) || Math.floor(v) !== v || v < 0) return null;
+        out[detail.parts[i].key] = v;
+        sum += v;
+      }
+      return sum === count ? out : null;
+    }
     function normalize(raw){
       var out = {};
       if(!raw || typeof raw !== "object") return out;
@@ -26,12 +46,27 @@
         var c = Math.floor(Number(e.count));
         if(!(c > 0)) return;
         out[k] = { date: k, source: sourceKey, count: c, updatedAt: Number(e.updatedAt) || 0 };
+        var b = cleanBreakdown(e.breakdown, c);
+        if(b) out[k].breakdown = b;
       });
       return out;
     }
     function isLegacyQuest(q){ return !!(q && q.autoSource === sourceKey); }
     function autoQuest(entry){
-      return { label: label + " " + entry.count + unit, done: true, tag: tag, autoSource: sourceKey, auto: true };
+      var base = label + " " + entry.count + unit;
+      var item = { label: base, done: true, tag: tag, autoSource: sourceKey, auto: true };
+      var b = cleanBreakdown(entry.breakdown, entry.count);
+      if(b){
+        var shown = detail.parts.filter(function(p){ return b[p.key] > 0; });
+        // label：画面の文字列（絵文字つき）。labelHtml：同じ内容に、絵文字ごとの title（意味）を付けたもの（画面のHTML用）。
+        // textLabel：コピー用テキストなど、絵文字が伝わらない場所向け（「（問題2・音読1）」）
+        item.label = base + " " + shown.map(function(p){ return p.icon + b[p.key]; }).join(" ");
+        item.labelHtml = escHtml(base) + " " + shown.map(function(p){
+          return '<span class="auto-detail" title="' + escHtml(p.title) + '" style="white-space:nowrap;">' + p.icon + b[p.key] + '</span>';
+        }).join(" ");
+        item.textLabel = base + "（" + shown.map(function(p){ return p.word + b[p.key]; }).join("・") + "）";
+      }
+      return item;
     }
     // 表示・集計用のクエスト一覧：[{item, idx, auto}]。idxは store の quests 配列の添字（自動記録は -1）
     function displayQuests(quests, autoMap, key){
@@ -71,7 +106,13 @@
   }
 
   var leapSource = makeAutoSource("leap", "LEAP単語帳（自動記録）", "英語");
-  var eikomiSource = makeAutoSource("eikomi", "英コミュ（自動記録）", "英語", "件");
+  // 英コミュ：問題演習(q)と音読(listen)の合算。内訳は 📝=問題 / 🎤=音読
+  var eikomiSource = makeAutoSource("eikomi", "英コミュ（自動記録）", "英語", "件", {
+    parts: [
+      { key: "q", icon: "📝", title: "問題", word: "問題" },
+      { key: "listen", icon: "🎤", title: "音読", word: "音読" }
+    ]
+  });
   var kyotsuMathSource = makeAutoSource("kyotsu-math", "kyotsu-math（自動記録）", "数学");
 
   // 複数ソース（leap/eikomi/kyotsu-math）を1画面分まとめて合成するための小さなヘルパー。

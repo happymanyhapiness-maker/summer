@@ -167,12 +167,12 @@ test("⑧表示単位：英コミュは「件」、LEAP・kyotsu-mathは「問�
 });
 
 // ---- 英コミュ側が書く新形式（breakdown付き）でも、count がそのまま表示される ----
-test("⑨eikomiAutoの新形式（count＋breakdown:{q,listen}）：countで表示され、breakdownは表示・集計に影響しない", function(){
+test("⑨eikomiAutoの新形式（count＋breakdown:{q,listen}）：breakdownは残り、内訳つきで表示される（詳細は eikomiBreakdownDisplay.test.js）", function(){
   const raw = { "2026-09-28": { date: "2026-09-28", source: "eikomi", count: 1, breakdown: { q: 0, listen: 1 }, updatedAt: 1790000000000 } };
   const eikomi = L.sources.eikomi.normalize(raw);
-  assert.deepEqual(eikomi["2026-09-28"], { date: "2026-09-28", source: "eikomi", count: 1, updatedAt: 1790000000000 });
+  assert.deepEqual(eikomi["2026-09-28"], { date: "2026-09-28", source: "eikomi", count: 1, updatedAt: 1790000000000, breakdown: { q: 0, listen: 1 } });
   const list = merge({}, eikomi, {}).displayQuests([], "2026-09-28");
-  assert.deepEqual(list.map(x => x.item.label), ["英コミュ（自動記録） 1件"]);
+  assert.deepEqual(list.map(x => x.item.label), ["英コミュ（自動記録） 1件 🎤1"]);
   assert.equal(list[0].item.done, true);
   assert.equal(list[0].auto, true);
 });

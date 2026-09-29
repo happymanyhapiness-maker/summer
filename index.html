@@ -273,7 +273,7 @@
 </head>
 <body>
 <script type="module" src="dq-firebase-sync.js?v=3"></script>
-<script src="dq-leap-auto.js?v=3"></script>
+<script src="dq-leap-auto.js?v=4"></script>
 <template id="__bundler_thumbnail" data-bg-color="#111A24">
   <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="800" fill="#111A24"/>
@@ -1191,7 +1191,7 @@ function renderQuests(){
   el.innerHTML = q.map(x=> x.auto ? `
     <div class="quest-item done quest-auto" data-auto="1">
       <div class="checkbox">${checkSVG()}</div>
-      <div class="quest-label">${x.item.label}</div>
+      <div class="quest-label">${x.item.labelHtml || x.item.label}</div>
     </div>
   ` : `
     <div class="quest-item ${x.item.done?'done':''}" data-idx="${x.idx}">
@@ -1333,7 +1333,7 @@ function generateLogText(){
       ? d.events.map(e=> `${eventLabel(e)}:${d.eventDone[e.id]?"完了":"未完了"}`).join("、")
       : "予定なし";
     const dq = dispItems(k);
-    const questDetail = dq.length ? dq.map(item=> `${item.done?"[済]":"[未]"}${item.label}`).join("、") : "なし";
+    const questDetail = dq.length ? dq.map(item=> `${item.done?"[済]":"[未]"}${item.textLabel || item.label}`).join("、") : "なし";
     lines.push(`${k}（${WD_JP[weekdayIdx(k)]}）`);
     lines.push(`  クエスト達成: ${s.done}/${s.total}（${pct}%） - ${questDetail}`);
     lines.push(`  予定: ${evText}`);
@@ -1666,7 +1666,7 @@ function renderRecordDayDetail(){
     const tag = item.tag && item.tag !== UNTAGGED ? `<span style="color:var(--ink-300); font-weight:600; margin-right:6px;">[${item.tag}]</span>` : "";
     // LEAPの自動記録は読み取り専用（record-quest-rowにしない＝タップで切り替えない）
     questHtml += `<div class="${x.auto?'record-quest-auto':'record-quest-row'}" data-idx="${x.idx}" style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--line); cursor:${x.auto?'default':'pointer'};">
-      <span>${tag}${item.label}</span><span style="color:${color}; font-weight:700;">${item.done?"済":"未"}</span>
+      <span>${tag}${item.labelHtml || item.label}</span><span style="color:${color}; font-weight:700;">${item.done?"済":"未"}</span>
     </div>`;
   });
   if(!questHtml) questHtml = `<div style="font-size:12.5px; color:var(--ink-300); padding:8px 0;">この日のクエストはありません</div>`;

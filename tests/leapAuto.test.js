@@ -82,7 +82,7 @@ test("保存：デイリークエストの保存は data/clientUpdatedAt だけ�
 });
 
 test("画面：集計・表示は合成版（dispItems/dispQuests）を使い、LEAP記録は読み取り専用", function(){
-  assert.match(html, /<script src="dq-leap-auto\.js\?v=3"><\/script>/);
+  assert.match(html, /<script src="dq-leap-auto\.js\?v=4"><\/script>/);
   assert.match(html, /function totalDoneQuestCount\(\)\{\n  let n = 0;\n  allDayKeys\(\)\.forEach\(k=>\{\n    n \+= dispItems\(k\)/);
   assert.match(html, /function dayQuestStats\(key\)\{\n  const q = dispItems\(key\);/);
   assert.match(html, /function renderResults\(\)\{\n  const q = dispItems\(activeDate\);/);
