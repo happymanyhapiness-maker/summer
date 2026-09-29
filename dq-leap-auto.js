@@ -105,7 +105,15 @@
     };
   }
 
-  var leapSource = makeAutoSource("leap", "LEAP単語帳（自動記録）", "英語");
+  // LEAP：回答を「新規（復習以外の学習）」と「復習」に分ける。内訳は 🆕=新規 / 🔁=復習。
+  //   復習＝4択の復習・苦手、ホームの復習、本の復習、見直し。それ以外（新規・全単語・チャレンジ・本・学習など）は新規。
+  //   キーは LEAP が書く breakdown:{new, review}。
+  var leapSource = makeAutoSource("leap", "LEAP単語帳（自動記録）", "英語", "問", {
+    parts: [
+      { key: "new", icon: "🆕", title: "新規（復習以外の学習）", word: "新規" },
+      { key: "review", icon: "🔁", title: "復習", word: "復習" }
+    ]
+  });
   // 英コミュ：問題演習(q)と音読(listen)の合算。内訳は 📝=問題 / 🎤=音読
   var eikomiSource = makeAutoSource("eikomi", "英コミュ（自動記録）", "英語", "件", {
     parts: [
@@ -113,7 +121,14 @@
       { key: "listen", icon: "🎤", title: "音読", word: "音読" }
     ]
   });
-  var kyotsuMathSource = makeAutoSource("kyotsu-math", "kyotsu-math（自動記録）", "数学");
+  // 数学：回答を「通常」と「復習」（復習モード・期限復習）に分ける。内訳は 📘=通常 / 🔁=復習。
+  //   キーは 数学アプリが書く breakdown:{normal, review}。
+  var kyotsuMathSource = makeAutoSource("kyotsu-math", "kyotsu-math（自動記録）", "数学", "問", {
+    parts: [
+      { key: "normal", icon: "📘", title: "通常", word: "通常" },
+      { key: "review", icon: "🔁", title: "復習", word: "復習" }
+    ]
+  });
 
   // 複数ソース（leap/eikomi/kyotsu-math）を1画面分まとめて合成するための小さなヘルパー。
   // sources: [{ def: makeAutoSourceの戻り値, map: そのソースの正規化済みautoMap }]

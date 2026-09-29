@@ -179,6 +179,6 @@ test("⑩見守り（保護者）だけに出る／読み込みは loadWatchData
   var body = extractFunction("renderLinkStatus") + extractFunction("loadLinkHeartbeats");
   assert.ok(!/persist\(|setDoc|pushLogs|localStorage/.test(body), "何も書き込まない");
 });
-test("⑪cache bust：dq-leap-auto.js の version（v=5）", function(){
-  assert.match(html, /<script src="dq-leap-auto\.js\?v=5"><\/script>/);
+test("⑪cache bust：dq-leap-auto.js の version（v=6）", function(){
+  assert.match(html, /<script src="dq-leap-auto\.js\?v=6"><\/script>/);
 });
